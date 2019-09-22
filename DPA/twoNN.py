@@ -31,8 +31,13 @@ def _twoNearestNeighbors(distances, indices, blockAn=True, block_ratio=20, frac=
     frac : float, default=1
         Define the fraction of points in the data set used for ID calculation. By default the full data set is used.   
     """
+    d_mle = 0.
+    for i in range(0, len(distances)):
+        log_nu_i = log(distances[i][2])-log(distances[i][1]) 
+        d_mle = d_mle + log_nu_i
+    id_mle = int(round(len(distances)/d_mle))
 
-    return 2
+    return id_mle
 
 class twoNearestNeighbors(BaseEstimator, DensityMixin):
     """ID-estimator that employs only the distances to the first two nearest neighbors of each point.
