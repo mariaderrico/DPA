@@ -2,23 +2,22 @@
 TWO-NN: Intrinsic dimension estimator by a minimal neighborhood information.
 """
 import numpy as np
+import heapq
 from sklearn.base import BaseEstimator, ClassifierMixin, TransformerMixin, DensityMixin
 from sklearn.utils.validation import check_X_y, check_array, check_is_fitted
 from sklearn.utils.multiclass import unique_labels
 from sklearn.metrics import euclidean_distances
 from sklearn.neighbors import NearestNeighbors
 from math import log, sqrt, exp, lgamma, pi, pow
+from sklearn.linear_model import LinearRegression
 
-def _twoNearestNeighbors(distances, indices, blockAn=True, block_ratio=20, frac=1):
+def _twoNearestNeighbors(distances, blockAn=True, block_ratio=20, frac=1):
     """
     Parameters
     ----------
     distances: array [n_samples, k_max]
         Distances to the k_max neighbors of each points.
  
-    indices : array [n_samples, k_max]
-        Indices of the k_max neighbors of each points.
-
     blockAn : bool, default=True
         If blockAn is True the algorithm perform a block analysis that allows discriminating the relevant dimensions 
         as a function of the block size. This allows to study the stability of the estimation with respect to
@@ -31,13 +30,40 @@ def _twoNearestNeighbors(distances, indices, blockAn=True, block_ratio=20, frac=
     frac : float, default=1
         Define the fraction of points in the data set used for ID calculation. By default the full data set is used.   
     """
+    N = len(distances)
+    log_nu = []
     d_mle = 0.
-    for i in range(0, len(distances)):
-        log_nu_i = log(distances[i][2])-log(distances[i][1]) 
+    for i in range(0, N):
+        # TODO: handle duplicate points, i.e. distances[i][1] equals to zero
+        log_nu_i = log(distances[i][2])-log(distances[i][1])
+        log_nu.append(log_nu_i) 
         d_mle = d_mle + log_nu_i
-    id_mle = int(round(len(distances)/d_mle))
+    # Intrinsic dimension estimated with MLE variant of TWO-NN
+    id_mle = int(round(N/d_mle))
 
-    return id_mle
+    # Perform linear fit -log[1-F(nu)]=d*log(nu), where F(nu)=i/N, with intercept=0
+    x = log_nu
+    if frac<1:
+        x = []
+        heapq.heapify(log_nu)
+        for _ in range(int(round(len(log_nu)*frac))):
+            x.append(heapq.heappop(log_nu))
+    else:
+        x = sorted(log_nu)
+    # TODO: check the available benchmark using (i+1)/N instead
+    #y = [-log(1.-(i+1)/N) for i in range(len(x))]    
+    y = [-log(1.-(i)/N) for i in range(len(x))]    
+    # Fit the model y = a * x using np.linalg.lstsq
+    #reg = LinearRegression().fit(np.asarray(x).reshape(-1, 1), y)
+    #id_mle = reg.coef_[0]
+    a, _, _, _ = np.linalg.lstsq(np.array(x)[:,np.newaxis], np.array(y))
+    id = a[0]
+    
+    # TODO: Implement block analysis and decimation plot
+
+    return int(round(id)), x, y
+
+
 
 class twoNearestNeighbors(BaseEstimator, DensityMixin):
     """ID-estimator that employs only the distances to the first two nearest neighbors of each point.
@@ -116,25 +142,22 @@ class twoNearestNeighbors(BaseEstimator, DensityMixin):
                         would be zero. Please set a lower value.")
 
         if self.metric == "precomputed":
-            nbrs = NearestNeighbors(n_neighbors=3, # Only two neighbors used; the point i is counted in its neighborhood
-                                          algorithm="auto",
+            # TODO: handle identical distances
+            nbrs = NearestNeighbors(n_neighbors=100, # Only two neighbors used; the point i is counted in its neighborhood
+                                          algorithm="brute",
                                         metric=self.metric,
                                         n_jobs=self.n_jobs).fit(X)
         else:
-            if self.frac<1:
-                X = X[np.random.choice(X.shape[0], int(round(X.shape[0]*self.frac)), replace=False), :]
-            nbrs = NearestNeighbors(n_neighbors=3, # Only two neighbors used; the point i is counted in its neighborhood
-                                         algorithm="brute",
+            # Remove duplicates coordinates
+            X = np.unique(X, axis=0)
+            nbrs = NearestNeighbors(n_neighbors=100, # Only two neighbors used; the point i is counted in its neighborhood
+                                         algorithm="auto",
                                         metric=self.metric, 
                                         n_jobs=self.n_jobs).fit(X)
-            #self.matrix_ = kneighbors_graph(X, n_neighbors=self.k_max,
-            #                                        mode="distance",
-            #                                        include_self=True)
         self.distances_, self.indices_ = nbrs.kneighbors(X) 
 
      
-        self.dim_ = _twoNearestNeighbors(self.distances_, 
-                                           self.indices_,
+        self.dim_, self.x_, self.y_ = _twoNearestNeighbors(self.distances_, 
                                     blockAn=self.blockAn, 
                              block_ratio=self.block_ratio, 
                                           frac=self.frac)
