@@ -9,11 +9,11 @@ from sklearn.metrics import euclidean_distances
 from sklearn.neighbors import NearestNeighbors
 from sklearn.neighbors import kneighbors_graph
 from math import log, sqrt, exp, lgamma, pi, pow
-#from . import twoNN
+from .twoNN import twoNearestNeighbors
 
 
 VALID_METRIC = ['precomputed', 'euclidean']
-VALID_DIM = ['auto', 'two_nn']
+VALID_DIM = ['auto', 'twoNN']
 
 def _PointAdaptive_kNN(distances, indices, k_max=1000, D_thr=23.92812698, dim=None):
     """
@@ -143,6 +143,21 @@ class PointAdaptive_kNN(BaseEstimator, DensityMixin):
         Method for intrinsic dimensionality calculation. If dim_algo is "auto", dim is assumed to be
         equal to n_samples. If dim_algo is a string, it must be one of the options allowed by VALID_DIM. 
 
+    blockAn : bool, default=True
+        This parameter is considered if dim_algo is "twoNN", it is ignored otherwise.
+        If blockAn is True the algorithm perform a block analysis that allows discriminating the relevant dimensions 
+        as a function of the block size. This allows to study the stability of the estimation with respect to
+        changes in the neighborhood size, which is crucial for ID estimations when the data lie on a manifold perturbed 
+        by a high-dimensional noise. 
+
+    block_ratio : int, default=20
+        This parameter is considered if dim_algo is "twoNN", it is ignored otherwise.
+        Set the minimum size of the blocks as n_samples/block_ratio. If blockAn=False, block_ratio is ignored.
+
+    frac : float, default=1
+        This parameter is considered if dim_algo is "twoNN", it is ignored otherwise.
+        Define the fraction of points in the data set used for ID calculation. By default the full data set is used.   
+
     dim : int
         Intrinsic dimensionality of the sample. If dim is provided, dim_algo is ignored.
 
@@ -202,11 +217,15 @@ class PointAdaptive_kNN(BaseEstimator, DensityMixin):
 
         
     """
-    def __init__(self, k_max=1000, D_thr=23.92812698, metric="euclidean", dim_algo="auto", dim=None, n_jobs=None):
+    def __init__(self, k_max=1000, D_thr=23.92812698, metric="euclidean", dim_algo="auto", 
+                       blockAn=True, block_ratio=20, frac=1, dim=None, n_jobs=None):
         self.k_max = k_max
         self.D_thr = D_thr
         self.metric = metric
         self.dim_algo = dim_algo
+        self.blockAn = blockAn
+        self.block_ratio = block_ratio
+        self.frac = frac
         self.dim = dim
         self.n_jobs = n_jobs
 
@@ -216,7 +235,9 @@ class PointAdaptive_kNN(BaseEstimator, DensityMixin):
         if dim_algo not in VALID_DIM:
             raise ValueError("invalid dim_algo: '{0}'".format(dim_algo))
 
-       
+        if self.dim_algo == "twoNN" and self.frac > 1:
+            raise ValueError("frac should be between 0 and 1.")
+
 
     def fit(self, X, y=None):
         """Fit the PAk estimator on the data.
@@ -242,11 +263,15 @@ class PointAdaptive_kNN(BaseEstimator, DensityMixin):
         if not self.dim:
             if self.dim_algo == "auto":
                 self.dim = X.shape[1]
-            elif self.dim_algo == "two_nn":
-                self.dim = X.shape[1] #two_nn().fit(X)
+            elif self.dim_algo == "twoNN":
+                if self.block_ratio >= X.shape[0]:
+                    raise ValueError("block_ratio is larger than the sample size, the minimum size for block analysis \
+                                would be zero. Please set a lower value.")
+                self.dim = twoNearestNeighbors(blockAn=self.blockAn, block_ratio=self.block_ratio, 
+                                               frac=self.frac, n_jobs=self.n_jobs).fit(X).dim_
             else:
                 pass
-     
+
         if self.k_max > X.shape[0]:
             self.k_max = int(X.shape[0]/2)
         if self.k_max < 3:
@@ -268,6 +293,7 @@ class PointAdaptive_kNN(BaseEstimator, DensityMixin):
             #                                        include_self=True)
         self.distances_, self.indices_ = nbrs.kneighbors(X) 
 
+     
         self.densities_, self.err_densities_, self.k_hat_, self.dc_ = _PointAdaptive_kNN(self.distances_, 
                                                                                  self.indices_,
                                                                               k_max=self.k_max, 

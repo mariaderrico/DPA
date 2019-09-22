@@ -35,12 +35,12 @@ def output_Fig1_test2():
     return out_F1
 
 def test_PointAdaptive_kNN(data_Fig1, output_Fig1_test2):
-    est = PointAdaptive_kNN(n_jobs=-1)
+    est = PointAdaptive_kNN(n_jobs=-1, dim_algo="twoNN")
     assert est.dim == None
     assert est.k_max == 1000
     assert est.D_thr == 23.92812698
     assert est.metric == "euclidean"
-    assert est.dim_algo == "auto"    
+    assert est.dim_algo == "twoNN"    
 
     est.fit(data_Fig1)
     assert hasattr(est, 'is_fitted_')
