@@ -101,17 +101,16 @@ def _PointAdaptive_kNN(distances, indices, k_max=1000, D_thr=23.92812698, dim=No
         densities.append(log(k-1)-(log(V1)+dim*log(dc[i]))) 
         err_densities.append(sqrt((4.*(k-1)+2.)/((k-1)*(k-2))))
 
-        # Apply correction to density if no neighbors are at the same distance from point i 
+        # Apply a correction to the density estimation if no neighbors are at the same distance from point i 
         # Check if neighbors with identical distances from point i
-        #identical = np.unique(distances[i]) == len(distances[i])
+        identical = np.unique(distances[i]) == len(distances[i])
         #if not identical:
-        #    densities[i] = NR.nrmax(densities[i], k_hat[i], 
-
-    # Apply translation by min(densities) 
-    #densities = densities - min(densities) + 1.
-        
-  
-
+        #    densities[i] = NR.nrmax(densities[i], k_hat[i], V_dic[i])
+        #else:
+        #    pass
+    # Apply shift to have all densities as positive values 
+    m = min(densities)
+    densities = [x-m+1 for x in densities]
     return densities, err_densities, k_hat, dc
 
 
