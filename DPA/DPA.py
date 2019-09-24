@@ -37,23 +37,6 @@ def _DensityPeakAdvanced(densities, err_densities, k_hat, distances, indices, dc
         if putative_center:
             centers.append(i)
     # Criterion 2 from Heuristic 1
-    """
-    # TODO: check implementation using dictionaries instead - not optimal
-    NN_dict = {}
-    for i in range(0,N):
-        for k in range(0, k_hat[i]):
-            j = indices[i][k+1]
-            if j in centers:
-                if j not in NN_dict.keys():
-                    NN_dict[j] = [i]
-                else:
-                    NN_dict[j].append(i)
-    for c in centers:
-        for i in NN_dict[c]:
-            if g[i]>g[c]:
-                centers.remove(c)
-                break
-    """
     for c in centers:
         for i in range(0,N):
             if g[c]<g[i] and c in indices[i][:k_hat[i]+1]:
@@ -62,12 +45,7 @@ def _DensityPeakAdvanced(densities, err_densities, k_hat, distances, indices, dc
 
     # Sort index by decreasing g
     ig_sort = np.argsort([-x for x in g])
-    """
-    ig_sort = []
-    for i in range(0,len(g)):
-        heapq.heappush(ig_sort, (g[i],i))
-    print(heapq.heappop(ig_sort)[0])
-    """
+
     # Assign all the points that are not centers to the same cluster as the nearest point with higher g. 
     #This assignation is performed in order of decreasing g
     clu_labels = [-1]*N
