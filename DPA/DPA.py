@@ -12,15 +12,82 @@ from sklearn.neighbors import kneighbors_graph
 from math import log, sqrt, exp, lgamma, pi, pow
 from .twoNN import twoNearestNeighbors
 from .PAk import PointAdaptive_kNN
+import heapq
+
 
 VALID_METRIC = ['precomputed', 'euclidean']
 VALID_DIM = ['auto', 'twoNN']
 VALID_DENSITY = ['PAk', 'kNN']
 
 def _DensityPeakAdvanced(densities, err_densities, k_hat, distances, indices, dc, Z):  
-    labels = [0]*len(densities)
+    # We define as cluster centers the local maxima of gi, where gi is defined as:
+    g = [densities[i]-err_densities[i] for i in range(0,len(densities))]
+
+    # Automatic detection of cluster centers
+    # Criterion 1 from Heuristic 1
+    centers = []
+    N = len(densities)
+    for i in range(0, N):
+        putative_center = True
+        for k in range(1, k_hat[i]+1): 
+            j = indices[i][k]
+            if g[j]>g[i]:
+                putative_center = False
+                break
+        if putative_center:
+            centers.append(i)
+    # Criterion 2 from Heuristic 1
+    """
+    # TODO: check implementation using dictionaries instead - not optimal
+    NN_dict = {}
+    for i in range(0,N):
+        for k in range(0, k_hat[i]):
+            j = indices[i][k+1]
+            if j in centers:
+                if j not in NN_dict.keys():
+                    NN_dict[j] = [i]
+                else:
+                    NN_dict[j].append(i)
+    for c in centers:
+        for i in NN_dict[c]:
+            if g[i]>g[c]:
+                centers.remove(c)
+                break
+    """
+    for c in centers:
+        for i in range(0,N):
+            if g[c]<g[i] and c in indices[i][:k_hat[i]+1]:
+                centers.remove(c)
+                break
+
+    # Sort index by decreasing g
+    ig_sort = np.argsort([-x for x in g])
+    """
+    ig_sort = []
+    for i in range(0,len(g)):
+        heapq.heappush(ig_sort, (g[i],i))
+    print(heapq.heappop(ig_sort)[0])
+    """
+    # Assign all the points that are not centers to the same cluster as the nearest point with higher g. 
+    #This assignation is performed in order of decreasing g
+    clu_labels = [-1]*N
+    for c in centers:
+        clu_labels[c] = centers.index(c)+1
+    for i in range(0,N):
+        el = ig_sort[i]
+        k = 0
+        while (clu_labels[el]==-1):
+            k=k+1
+            clu_labels[el] = clu_labels[indices[el][k]] # the point with higher g is assigned by construction
+
+ 
+    # Finding saddle points between pair of clusters
+    # TODO
+
+
+    labels = clu_labels
     topography = [1]*len(densities)
-    return labels, topography
+    return labels, topography, g, centers
    
 class DensityPeakAdvanced(BaseEstimator, DensityMixin):
     """ The non-parametric Density Peak clustering.
@@ -230,7 +297,8 @@ class DensityPeakAdvanced(BaseEstimator, DensityMixin):
             # TODO: implement option for kNN
             pass
 
-        self.labels_, self.topography_ = _DensityPeakAdvanced(self.densities, self.err_densities, self.k_hat,
+        self.labels_, self.topography_, self.g_, self.centers_ = _DensityPeakAdvanced(self.densities, 
+                                                              self.err_densities, self.k_hat,
                                                               self.distances_, self.indices_, self.dc, self.Z)
                                                               
 

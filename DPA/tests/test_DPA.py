@@ -16,8 +16,24 @@ def data_Fig1():
     data_F1 = pd.read_csv("./benchmarks/Fig1.dat", sep=" ", header=None)
     return data_F1
 
+@pytest.fixture
+def output_Fig1_labels():
+    # Read benchmark output of the PAk algorithm: right after the search of the
+    # shift in the densities values.
+    out_F1 = pd.read_csv("./benchmarks/output_Fig1_labels.csv", header=None)
+    out_F1.columns = ["i", "clu"]
+    return out_F1
 
-def test_PointAdaptive_kNN(data_Fig1):
+@pytest.fixture
+def output_Fig1_g():
+    # Read benchmark output of the PAk algorithm: right after the search of the
+    # shift in the densities values.
+    out_F1 = pd.read_csv("./benchmarks/output_Fig1_g.csv", header=None)
+    out_F1.columns = ["i", "g"]
+    return out_F1
+
+
+def test_PointAdaptive_kNN(data_Fig1, output_Fig1_labels, output_Fig1_g):
     est = DensityPeakAdvanced(n_jobs=-1)
     assert est.dim == None
     assert est.k_max == 1000
@@ -30,7 +46,9 @@ def test_PointAdaptive_kNN(data_Fig1):
 
     assert est.k_max == max(est.k_hat)+1 # k_max include the point i
     assert len(data_Fig1) == len(est.densities)
-
+    
+    npt.assert_almost_equal(est.g_, output_Fig1_g["g"], decimal=2)
+    assert_array_equal(est.labels_, output_Fig1_labels["clu"])
     assert_array_equal(est.topography_, np.ones(len(data_Fig1), dtype=np.int64))
     #print(est.labels_[:10])
     #print(est.topography_[:10]
