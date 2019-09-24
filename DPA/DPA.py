@@ -29,8 +29,7 @@ def _DensityPeakAdvanced(densities, err_densities, k_hat, distances, indices, dc
     N = len(densities)
     for i in range(0, N):
         putative_center = True
-        for k in range(1, k_hat[i]+1): 
-            j = indices[i][k]
+        for j in indices[i][1:k_hat[i]+1]:
             if g[j]>g[i]:
                 putative_center = False
                 break
@@ -39,7 +38,7 @@ def _DensityPeakAdvanced(densities, err_densities, k_hat, distances, indices, dc
     # Criterion 2 from Heuristic 1
     for c in centers:
         for i in range(0,N):
-            if g[c]<g[i] and c in indices[i][:k_hat[i]+1]:
+            if g[c]<g[i] and c in indices[i][1:k_hat[i]+1]:
                 centers.remove(c)
                 break
 
