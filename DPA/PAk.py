@@ -16,14 +16,15 @@ VALID_METRIC = ['precomputed', 'euclidean']
 VALID_DIM = ['auto', 'twoNN']
 
 def _PointAdaptive_kNN(distances, indices, k_max=1000, D_thr=23.92812698, dim=None):
-    """
+    """Main function implementing the Pointwise Adaptive k-NN density estimator.
+
     Parameters
     ----------
-    distances: array [n_samples, k_max]
-        Distances to the k_max neighbors of each points.
+    distances: array [n_samples, k_max+1]
+        Distances to the k_max neighbors of each points. The point is included. 
   
-    indices : array [n_samples, k_max]
-        Indices of the k_max neighbors of each points. 
+    indices : array [n_samples, k_max+1]
+        Indices of the k_max neighbors of each points. The point is included.
 
     k_max : int, default=1000
         The maximum number of nearest-neighbors considered by the procedure that returns the
@@ -55,7 +56,7 @@ def _PointAdaptive_kNN(distances, indices, k_max=1000, D_thr=23.92812698, dim=No
     
     References
     ----------
- 
+    # TODO 
 
     """
     # Compute the volume of the dim-sphere with unitary radius
@@ -104,6 +105,7 @@ def _PointAdaptive_kNN(distances, indices, k_max=1000, D_thr=23.92812698, dim=No
         # Apply a correction to the density estimation if no neighbors are at the same distance from point i 
         # Check if neighbors with identical distances from point i
         identical = np.unique(distances[i]) == len(distances[i])
+        # TODO:
         #if not identical:
         #    densities[i] = NR.nrmax(densities[i], k_hat[i], V_dic[i])
         #else:
@@ -111,11 +113,12 @@ def _PointAdaptive_kNN(distances, indices, k_max=1000, D_thr=23.92812698, dim=No
     # Apply shift to have all densities as positive values 
     m = min(densities)
     densities = [x-m+1 for x in densities]
+
     return densities, err_densities, k_hat, dc
 
 
 class PointAdaptive_kNN(BaseEstimator, DensityMixin):
-    """ The pointwise-adaptive k-NN density estimator.
+    """Class definition for the Pointwise Adaptive k-NN density estimator.
 
     Parameters
     ----------
@@ -170,10 +173,10 @@ class PointAdaptive_kNN(BaseEstimator, DensityMixin):
 
     Attributes
     ----------
-    distances_ : array [n_samples, k_max]
+    distances_ : array [n_samples, k_max+1]
         Distances to the k_max neighbors of each points.
 
-    indices_ : array [n_samples, k_max]
+    indices_ : array [n_samples, k_max+1]
         Indices of the k_max neighbors of each points.
  
     densities_ : array [n_samples]
@@ -192,7 +195,7 @@ class PointAdaptive_kNN(BaseEstimator, DensityMixin):
 
     Examples
     --------
-    >>> from DPApipe.DPA import PAk
+    >>> from DPA import PAk
     >>> import numpy as np
     >>> X = np.array([[1, 1], [2, 1], [1, 0],
     ...               [4, 7], [3, 5], [3, 6]])
@@ -214,7 +217,7 @@ class PointAdaptive_kNN(BaseEstimator, DensityMixin):
     
     References
     ----------
-
+    # TODO
         
     """
     def __init__(self, k_max=1000, D_thr=23.92812698, metric="euclidean", dim_algo="auto", 
@@ -246,7 +249,6 @@ class PointAdaptive_kNN(BaseEstimator, DensityMixin):
         ----------
         X : array [n_samples, n_samples] if metric == “precomputed”, or, 
             [n_samples, n_features] otherwise
-            #{array-like, sparse matrix}, shape (n_samples, n_features)
             The input samples.
 
         y : Ignored
@@ -288,9 +290,6 @@ class PointAdaptive_kNN(BaseEstimator, DensityMixin):
                                          algorithm="brute", 
                                         metric=self.metric, 
                                         n_jobs=self.n_jobs).fit(X)
-            #self.matrix_ = kneighbors_graph(X, n_neighbors=self.k_max,
-            #                                        mode="distance",
-            #                                        include_self=True)
         self.distances_, self.indices_ = nbrs.kneighbors(X) 
 
      
@@ -300,30 +299,8 @@ class PointAdaptive_kNN(BaseEstimator, DensityMixin):
                                                                               D_thr=self.D_thr, 
                                                                                   dim=self.dim)
         self.is_fitted_ = True
+
         return self
 
 
-    def score(self, X):
-        """ A reference implementation of a predicting function.
-
-        Parameters
-        ----------
-        X : {array-like, sparse matrix}, shape (n_samples, n_features)
-            The training input samples.
-
-        Returns
-        -------
-        density : ndarray, shape (n_samples,)
-            The array of log(density) evaluations. 
-
-        err_density : ndarray, shape (n_samples,)
-            The uncertainty on the density estimation.
-
-        k_hat : ndarray, shape (n_samples,)
-            The optimal neighborhood size.
- 
-        """
-        X = check_array(X, accept_sparse=True)
-        check_is_fitted(self, 'is_fitted_')
-        return np.ones(X.shape[0], dtype=np.int64)
 
