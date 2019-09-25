@@ -12,7 +12,8 @@ from math import log, sqrt, exp, lgamma, pi, pow
 from sklearn.linear_model import LinearRegression
 
 def _twoNearestNeighbors(distances, blockAn=True, block_ratio=20, frac=1):
-    """
+    """Main function for the TWO-NN estimator.
+
     Parameters
     ----------
     distances: array [n_samples, k_max]
@@ -50,23 +51,24 @@ def _twoNearestNeighbors(distances, blockAn=True, block_ratio=20, frac=1):
             x.append(heapq.heappop(log_nu))
     else:
         x = sorted(log_nu)
-    # TODO: check the available benchmark using (i+1)/N instead
+
+    # TODO: compare with the available benchmarks using (i+1)/N instead
     #y = [-log(1.-(i+1)/N) for i in range(len(x))]    
     y = [-log(1.-(i)/N) for i in range(len(x))]    
     # Fit the model y = a * x using np.linalg.lstsq
-    #reg = LinearRegression().fit(np.asarray(x).reshape(-1, 1), y)
-    #id_mle = reg.coef_[0]
     a, _, _, _ = np.linalg.lstsq(np.array(x)[:,np.newaxis], np.array(y))
     id = a[0]
     
-    # TODO: Implement block analysis and decimation plot
+    # TODO: Implement block analysis and decimation plot. It doesn't affect the results.
 
     return int(round(id)), x, y
 
 
 
 class twoNearestNeighbors(BaseEstimator, DensityMixin):
-    """ID-estimator that employs only the distances to the first two nearest neighbors of each point.
+    """Class definition for TWO-NN: Intrinsic dimension estimator by a minimal neighborhood information.
+
+    The TWO-NN estimator uses only the distances to the first two nearest neighbors of each point.
 
 
     Parameters
@@ -105,6 +107,11 @@ class twoNearestNeighbors(BaseEstimator, DensityMixin):
     dim_ = int
         The intrinsic dimensionality
  
+    References
+    ----------
+    # TODO
+
+
     """
     def __init__(self, metric='euclidean',  blockAn=True, block_ratio=20, frac=1, n_jobs=None):
         self.metric = 'euclidean'
