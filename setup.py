@@ -15,9 +15,10 @@ DISTNAME = 'DPApipeline'
 DESCRIPTION = 'The Density Peak Advanced packages.'
 with codecs.open('README.rst', encoding='utf-8-sig') as f:
     LONG_DESCRIPTION = f.read()
+with open('requirements.txt') as f:
+    INSTALL_REQUIRES = f.read().splitlines()
 LICENSE = 'new BSD'
 VERSION = __version__
-INSTALL_REQUIRES = ['numpy', 'scipy', 'scikit-learn']
 CLASSIFIERS = ['Intended Audience :: Science/Research',
                'Intended Audience :: Developers',
                'License :: OSI Approved',
@@ -47,11 +48,12 @@ EXTRAS_REQUIRE = {
 
 setup(name=DISTNAME,
       description=DESCRIPTION,
+      author="Maria d'Errico",
       license=LICENSE,
       version=VERSION,
       long_description=LONG_DESCRIPTION,
       zip_safe=False,  # the package can run out of an .egg file
       classifiers=CLASSIFIERS,
-      packages=find_packages(),
+      packages=find_packages(exclude=['notebooks']),
       install_requires=INSTALL_REQUIRES,
       extras_require=EXTRAS_REQUIRE)
