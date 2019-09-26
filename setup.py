@@ -11,7 +11,7 @@ ver_file = os.path.join('DPA', '_version.py')
 with open(ver_file) as f:
     exec(f.read())
 
-DISTNAME = 'DPApipe'
+DISTNAME = 'DPApipeline'
 DESCRIPTION = 'The Density Peak Advanced packages.'
 with codecs.open('README.rst', encoding='utf-8-sig') as f:
     LONG_DESCRIPTION = f.read()
