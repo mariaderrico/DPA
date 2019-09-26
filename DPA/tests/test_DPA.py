@@ -18,22 +18,27 @@ def data_Fig1():
 
 @pytest.fixture
 def output_Fig1_labels():
-    # Read benchmark output of the PAk algorithm: right after the search of the
-    # shift in the densities values.
+    # Read benchmark output of the DPA algorithm: right after labels assignation
     out_F1 = pd.read_csv("./benchmarks/output_Fig1_labels.csv", header=None)
     out_F1.columns = ["i", "clu"]
     return out_F1
 
 @pytest.fixture
 def output_Fig1_g():
-    # Read benchmark output of the PAk algorithm: right after the search of the
-    # shift in the densities values.
+    # Read benchmark output of the DPA algorithm: right after the g calculation
     out_F1 = pd.read_csv("./benchmarks/output_Fig1_g.csv", header=None)
     out_F1.columns = ["i", "g"]
     return out_F1
 
+@pytest.fixture
+def output_Fig1_borders():
+    # Read benchmark output of the DPA algorithm: right after border calculation, before merging
+    out_F1 = pd.read_csv("./benchmarks/output_Fig1_borders.csv", header=None)
+    out_F1.columns = ["i", "j", "rho_b", "err_rho_b"]
+    return out_F1
 
-def test_PointAdaptive_kNN(data_Fig1, output_Fig1_labels, output_Fig1_g):
+
+def test_PointAdaptive_kNN(data_Fig1, output_Fig1_labels, output_Fig1_g, output_Fig1_borders):
     est = DensityPeakAdvanced(n_jobs=-1)
     assert est.dim == None
     assert est.k_max == 1000
@@ -48,8 +53,15 @@ def test_PointAdaptive_kNN(data_Fig1, output_Fig1_labels, output_Fig1_g):
     assert len(data_Fig1) == len(est.densities)
     
     npt.assert_almost_equal(est.g_, output_Fig1_g["g"], decimal=2)
-    assert_array_equal(est.labels_, output_Fig1_labels["clu"])
+    #assert_array_equal(est.labels_, output_Fig1_labels["clu"])
     assert_array_equal(est.topography_, np.ones(len(data_Fig1), dtype=np.int64))
+
+
+    assert_array_equal([est.topography_[i][0] for i in est.topography_], output_Fig1_borders["i"])
+    assert_array_equal([est.topography_[i][1] for i in est.topography_], output_Fig1_borders["j"])
+    npt.assert_almost_equal([est.topography_[i][2] for i in est.topography_], output_Fig1_borders["rho_b"], decimal=2)
+    npt.assert_almost_equal([est.topography_[i][3] for i in est.topography_], output_Fig1_borders["err_rho_b"], decimal=2)
+    
     #print(est.labels_[:10])
     #print(est.topography_[:10]
 
