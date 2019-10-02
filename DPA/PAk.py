@@ -10,6 +10,7 @@ from sklearn.neighbors import NearestNeighbors
 from sklearn.neighbors import kneighbors_graph
 from math import log, sqrt, exp, lgamma, pi, pow
 from .twoNN import twoNearestNeighbors
+from . import _PAk
 
 
 VALID_METRIC = ['precomputed', 'euclidean']
@@ -59,57 +60,9 @@ def _PointAdaptive_kNN(distances, indices, k_max=1000, D_thr=23.92812698, dim=No
     # TODO 
 
     """
-    # Compute the volume of the dim-sphere with unitary radius
-    V1 = exp(dim/2.*log(pi)-lgamma((dim+2)/2.))    
-    N = distances.shape[0]
-    k_hat = []
-    dc = []
-    densities = []
-    err_densities = []
-    V_dic = {}
-    for i in range(0,N):
-        k = 3 # Minimum number of neighbors required
-        Dk = 0
-        # Stop when the k+1-th neighbors has a significantly different density from point i 
-        while (k<k_max and Dk<=D_thr):
-            # Note: the k-th neighbor is at position k in the distances and indices arrays
-            # Volumes are stored in V_dic dictionary to avoid double computations 
-            if i in V_dic.keys() and V_dic[i][k-1] != -1:
-                vi = V_dic[i][k-1]
-            elif i not in V_dic.keys():
-                V_dic[i] = [-1]*k_max
-                V_dic[i][k-1] = V1*exp(dim*log(distances[i][k]))
-                vi = V_dic[i][k-1]
-            else:
-                V_dic[i][k-1] = V1*exp(dim*log(distances[i][k]))
-                vi = V_dic[i][k-1]
-            # Check on the k+1-th neighbor of i
-            j = indices[i][k+1]
-            if j in V_dic.keys() and V_dic[j][k-1] != -1:
-                vj = V_dic[j][k-1]
-            elif j not in V_dic.keys():
-                V_dic[j] = [-1]*k_max
-                V_dic[j][k-1] = V1*exp(dim*log(distances[j][k]))
-                vj = V_dic[j][k-1]
-            else:
-                V_dic[j][k-1] = V1*exp(dim*log(distances[j][k]))
-                vj = V_dic[j][k-1]
+    # The adaptive k-Nearest Neighbor density estimator
+    k_hat, dc, densities, err_densities, V_dic = _PAk.get_densities(dim, distances, k_max, D_thr, indices)
 
-            Dk = -2.*k*(log(vi)+log(vj)-2.*log(vi+vj)+log(4.))
-            k += 1
-        k_hat.append(k-1)
-        dc.append(distances[i][k-1]) #(k-1)-th neighbor is at position k-1
-        densities.append(log(k-1)-(log(V1)+dim*log(dc[i]))) 
-        err_densities.append(sqrt((4.*(k-1)+2.)/((k-1)*(k-2))))
-
-        # Apply a correction to the density estimation if no neighbors are at the same distance from point i 
-        # Check if neighbors with identical distances from point i
-        identical = np.unique(distances[i]) == len(distances[i])
-        # TODO:
-        #if not identical:
-        #    densities[i] = NR.nrmax(densities[i], k_hat[i], V_dic[i])
-        #else:
-        #    pass
     # Apply shift to have all densities as positive values 
     m = min(densities)
     densities = [x-m+1 for x in densities]
@@ -292,7 +245,6 @@ class PointAdaptive_kNN(BaseEstimator, DensityMixin):
                                         n_jobs=self.n_jobs).fit(X)
         self.distances_, self.indices_ = nbrs.kneighbors(X) 
 
-     
         self.densities_, self.err_densities_, self.k_hat_, self.dc_ = _PointAdaptive_kNN(self.distances_, 
                                                                                  self.indices_,
                                                                               k_max=self.k_max, 
