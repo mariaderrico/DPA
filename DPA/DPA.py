@@ -12,8 +12,7 @@ from sklearn.neighbors import kneighbors_graph
 from math import log, sqrt, exp, lgamma, pi, pow
 from .twoNN import twoNearestNeighbors
 from .PAk import PointAdaptive_kNN
-import heapq
-
+from . import _DPA
 
 VALID_METRIC = ['precomputed', 'euclidean']
 VALID_DIM = ['auto', 'twoNN']
@@ -68,92 +67,28 @@ def _DensityPeakAdvanced(densities, err_densities, k_hat, distances, indices, Z)
 
     # Automatic detection of cluster centers
     #---------------------------------------
-    # Criterion 1 from Heuristic 1
-    centers = []
     N = len(densities)
-    for i in range(0, N):
-        putative_center = True
-        for j in indices[i][1:k_hat[i]+1]:
-            if g[j]>g[i]:
-                putative_center = False
-                break
-        if putative_center:
-            centers.append(i)
-    # Criterion 2 from Heuristic 1
-    for c in centers:
-        for i in range(0,N):
-            if g[c]<g[i] and c in indices[i][1:k_hat[i]+1]:
-                centers.remove(c)
-                break
+    centers = _DPA.get_centers(N, indices, k_hat, g)
     Nclus = len(centers)
-
-    # Sort index by decreasing g
-    #---------------------------
-    ig_sort = np.argsort([-x for x in g])
 
     # Assign points to clusters
     #--------------------------
     # Assign all the points that are not centers to the same cluster as the nearest point with higher g. 
     # This assignation is performed in order of decreasing g
-    clu_labels = [-1]*N
-    for c in centers:
-        clu_labels[c] = centers.index(c)
-    for i in range(0,N):
-        el = ig_sort[i]
-        k = 0
-        while (clu_labels[el]==-1):
-            k=k+1
-            clu_labels[el] = clu_labels[indices[el][k]] # the point with higher g is already assigned by construction
+    clu_labels = _DPA.initial_assignment(g, N, indices, centers)
 
     # Topography reconstruction
     #--------------------------
     # Finding saddle points between pair of clusters c and c'.
     # Criterion 1 from Heuristic 2:
     # point i belonging to c is at the border if its closest point j belonging to c′ is within a distance k_hat[i] 
-    border_dict = {}
-    g_saddle = {}
-    for i in range(0,N):
-        for k in range(0,k_hat[i]):
-            j = indices[i][k+1]
-            if clu_labels[j]!=clu_labels[i]:
-                if (i, clu_labels[i]) not in border_dict.keys():
-                    border_dict[(i, clu_labels[i])] = [-1]*Nclus
-                    border_dict[(i, clu_labels[i])][clu_labels[j]] = j
-                elif border_dict[(i, clu_labels[i])][clu_labels[j]]==-1:
-                    border_dict[(i, clu_labels[i])][clu_labels[j]] = j
-                else:
-                    pass
-    # Criterion 2 from Heuristic 2:
-    # check if i is the closest point to j among those belonging to c.
-    for i,c in border_dict.keys():
-        for cp in range(Nclus):
-            j = border_dict[(i,c)][cp]
-            if j!=-1:
-                if (j,cp) in border_dict.keys() and border_dict[(j,cp)][c] == i:
-                    m_c = min(c,cp)
-                    M_c = max(c,cp)
-                    if (m_c, M_c) in g_saddle.keys():
-                        g_saddle[(m_c,M_c)] = (i, max(g_saddle[(m_c,M_c)][1], g[i]))
-                    else:
-                        g_saddle[(m_c,M_c)] = (i, g[i])
-
-    Rho_bord = np.zeros((Nclus,Nclus),dtype=float)
-    Rho_bord_err = np.zeros((Nclus,Nclus),dtype=float)
-    for c,cp in g_saddle.keys():
-        i = g_saddle[(c,cp)][0]
-        Rho_bord[c][cp] = densities[i]
-        Rho_bord[cp][c] = densities[i]
-        Rho_bord_err[c][cp] = err_densities[i]
-        Rho_bord_err[cp][c] = err_densities[i]
-    #for c in range(0,Nclus):
-    #    Rho_bord[c][c] = -1
-    #    Rho_bord_err[c][c] = 0
+    Rho_bord, Rho_bord_err = _DPA.get_borders(N, k_hat, indices, clu_labels, Nclus, g, densities, err_densities)
 
     topography_temp = []
     for i in range(0, Nclus-1):
         for j in range(i+1, Nclus):
             topography_temp.append([i,j, Rho_bord[i][j], Rho_bord_err[i][j]])
-
+    
     # Merging:
     # TODO
 
@@ -355,7 +290,6 @@ class DensityPeakAdvanced(BaseEstimator, DensityMixin):
     
         # If densities, uncertainties and k_hat are provided as input, compute only the
         # matrix of nearest neighbor: 
-        
         if self.densities and self.err_densities and self.k_hat:
             self.k_max = max(self.k_hat)
             if self.metric == "precomputed":
@@ -379,7 +313,6 @@ class DensityPeakAdvanced(BaseEstimator, DensityMixin):
             self.densities = PAk.densities_
             self.err_densities = PAk.err_densities_
             self.k_hat = PAk.k_hat_
-
         else:
             # TODO: implement option for kNN
             pass
