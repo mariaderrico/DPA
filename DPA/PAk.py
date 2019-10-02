@@ -61,11 +61,7 @@ def _PointAdaptive_kNN(distances, indices, k_max=1000, D_thr=23.92812698, dim=No
 
     """
     # The adaptive k-Nearest Neighbor density estimator
-    k_hat, dc, densities, err_densities, V_dic = _PAk.get_densities(dim, distances, k_max, D_thr, indices)
-
-    # Apply shift to have all densities as positive values 
-    m = min(densities)
-    densities = [x-m+1 for x in densities]
+    k_hat, dc, densities, err_densities = _PAk.get_densities(dim, distances, k_max, D_thr, indices)
 
     return densities, err_densities, k_hat, dc
 
