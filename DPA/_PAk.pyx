@@ -1,9 +1,15 @@
 # file '_PAk.pyx'. 
+# cython: cdivision=True
 import numpy as np
 cimport numpy as c_np
 from math import log, sqrt, exp, lgamma, pi, pow
 from scipy.optimize import minimize
+import sys
+import NR
 
+DBL_MIN = sys.float_info.min
+ctypedef c_np.float64_t DOUBLE
+ctypedef c_np.int32_t INT
 
 def ratio_test(i, N, V1, V_dic, dim, distances, k_max, D_thr, indices):
     # Compute the volume of the dim-sphere with unitary radius
@@ -40,39 +46,17 @@ def ratio_test(i, N, V1, V_dic, dim, distances, k_max, D_thr, indices):
         k += 1
     return k, distances[i][k-1], V_dic
 
-def ML_fun(params, args):
-    '''
-    The function returns the log-Likelihood expression to be minimized.
-   
-    Requirements:
 
-    * **params**: array of initial values for ''a'', ''b''
-    * **args**: additional parameters ''kopt'', ''Vi'' entering the Likelihood
+cdef matinv2(Cov2):
+  cdef c_np.ndarray[double, ndim=2] Covinv2 =np.zeros((2,2))
+  cdef double determinant= Cov2[0][0]*Cov2[1][1]-Cov2[1][0]*Cov2[0][1]
+  Covinv2[0][0]=Cov2[1][1]/determinant
+  Covinv2[1][1]=Cov2[0][0]/determinant
+  Covinv2[0][1]=-Cov2[0][1]/determinant
+  Covinv2[1][0]=Covinv2[0][1]
+  return Covinv2
 
-    Note:
-   
-    * **b**: correspond to the ''log(rho)'', as in Eq. (S1)
-    * **a**: the linear correction, as in Eq. (S1)
 
-    '''
-    #cdef c_np.ndarray[float, ndim=1] g= np.zeros((2),dtype=float)
-    cdef float b=params[0]
-    cdef float a=params[1]
-    cdef int kopt = args[0]
-    cdef float gb=kopt
-    cdef float ga=(kopt+1)*kopt*0.5
-    cdef float L0=b*gb+a*ga
-    cdef c_np.ndarray[double, ndim=1] Vi=args[1]
-    cdef int k
-    cdef float t, tt
-    cdef float s
-    for k in range(1,kopt):
-        jf=float(k)
-        t=b+a*jf
-        s=exp(t)
-        tt=Vi[k-1]*s
-        L0=L0-tt
-    return -L0
 
 def ML_hess_fun(params, args):
     '''
@@ -89,25 +73,26 @@ def ML_hess_fun(params, args):
     * **a**: the linear correction, as in Eq. (S1)
 
     '''
-    cdef c_np.ndarray[double, ndim=1] g = np.zeros(2)
+    #cdef c_np.ndarray[double, ndim=1] g = np.zeros(2)
     cdef float b=params[0]
     cdef float a=params[1]
     cdef int kopt = args[0]
-    cdef float gb=kopt
-    cdef float ga=(kopt+1)*kopt*0.5
+    cdef double gb=kopt
+    cdef double ga=(kopt+1)*kopt*0.5
     cdef float L0=b*gb+a*ga
     cdef c_np.ndarray[double, ndim=1] Vi=args[1]
     cdef c_np.ndarray[double, ndim=2] Cov2 = np.zeros((2,2))
     cdef c_np.ndarray[double, ndim=2] Covinv2
     cdef int k
-    cdef float jf, t, tt, s
+    cdef float jf, t, tt
+    cdef float s
 
     for k in range(1,kopt):
         jf=float(k)
         t=b+a*jf
         s=exp(t)
         tt=Vi[k-1]*s
-        L0=L0-tt
+        L0=L0-t-tt
         gb=gb-tt
         ga=ga-jf*tt
         Cov2[0][0]=Cov2[0][0]-tt
@@ -115,10 +100,11 @@ def ML_hess_fun(params, args):
         Cov2[1][1]=Cov2[1][1]-jf*jf*tt
     Cov2[1][0]=Cov2[0][1]
     Cov2 = Cov2*(-1)
-    Covinv2 = np.linalg.inv(Cov2)
-    g[0]=sqrt(Covinv2[0][0])
-    g[1]=sqrt(Covinv2[1][1])
-    return g
+    Covinv2 = matinv2(Cov2)
+    #Covinv2 = np.linalg.inv(Cov2)
+    #g[0]=sqrt(Covinv2[0][0])
+    #g[1]=sqrt(Covinv2[1][1])
+    return Cov2, Covinv2, gb, ga
 
 def MLmax(rr, kopt, Vi):
     '''
@@ -134,10 +120,35 @@ def MLmax(rr, kopt, Vi):
 
     '''
     cdef float a_err
-    results = minimize(ML_fun, [rr,0.], method='Nelder-Mead', args=([kopt,Vi],), options={'maxiter':1000})
-    err = ML_hess_fun(results.x, [kopt,Vi])
-    a_err = err[1]
-    rr = results.x[0] #b
+    cdef c_np.ndarray[double, ndim=2] Cov2, Covinv2
+    cdef float gb, ga, sb, sa
+    cdef float func = 100.
+    cdef int niter = 0
+    cdef float stepmax = 0.1*abs(rr)
+    cdef float sigma = 0.1
+    cdef float b = rr
+    cdef float a = 0.
+
+    Cov2, Covinv2, gb, ga = ML_hess_fun([b,a], [kopt,Vi])
+    while(func>0.001 and niter<1000):
+        sb=float(Covinv2[0][0]*gb+Covinv2[0][1]*ga)
+        sa=float(Covinv2[1][0]*gb+Covinv2[1][1]*ga)
+        niter += 1
+        sigma = 0.1
+        if abs(stepmax/sb)>stepmax:
+            sigma = abs(stepmax/sb)
+        b = b-sigma*sb
+        a = a-sigma*sa
+        Cov2, Covinv2, gb, ga = ML_hess_fun([b, a],[kopt,Vi])
+        if abs(a)<DBL_MIN or abs(b)<DBL_MIN:
+            func = max(gb, ga)
+        else:
+            func = max(abs(gb/b), abs(ga/a))
+    Cov2 = np.negative(Cov2)
+    Covinv2 = matinv2(Cov2)
+
+    a_err = sqrt(Covinv2[1][1])
+    rr = b
     return rr
 
 
@@ -212,8 +223,8 @@ def get_densities(dim, distances, k_max, D_thr, indices):
         # TODO:
         if not identical:
             densities[i] = MLmax(densities[i], k_hat[i], Vi)
-        #    densities[i] = NR.nrmax(densities[i], k_hat[i], V_dic[i])
-        #else:
-        #    pass
+            #densities[i] = NR.nrmaxl(densities[i], k_hat[i], V_dic[i])
+        else:
+            pass
     return k_hat, dc, densities, err_densities, V_dic
 
