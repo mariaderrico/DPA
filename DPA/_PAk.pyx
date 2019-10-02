@@ -46,6 +46,7 @@ def ratio_test(i, N, V1, V_dic, dim, distances, k_max, D_thr, indices):
         k += 1
     return k, distances[i][k-1], V_dic
 
+"""
 
 cdef matinv2(Cov2):
   cdef c_np.ndarray[double, ndim=2] Covinv2 =np.zeros((2,2))
@@ -151,7 +152,7 @@ def MLmax(rr, kopt, Vi):
     rr = b
     return rr
 
-
+"""
 
 def get_densities(dim, distances, k_max, D_thr, indices):
     """Main function implementing the Pointwise Adaptive k-NN density estimator.
@@ -222,8 +223,8 @@ def get_densities(dim, distances, k_max, D_thr, indices):
         #identical = len(np.unique(distances[i])) == len(distances[i])
         # TODO:
         if not identical:
-            densities[i] = MLmax(densities[i], k_hat[i], Vi)
-            #densities[i] = NR.nrmaxl(densities[i], k_hat[i], V_dic[i])
+            #densities[i] = MLmax(densities[i], k_hat[i], Vi)
+            densities[i] = NR.nrmaxl(densities[i], k_hat[i], V_dic[i])
         else:
             pass
     return k_hat, dc, densities, err_densities, V_dic
