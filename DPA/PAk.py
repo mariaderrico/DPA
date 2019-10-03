@@ -1,6 +1,9 @@
-"""
-The pointwise-adaptive k-NN density estimator.
-"""
+# The pointwise-adaptive k-NN density estimator.
+#
+# Author: Maria d'Errico <mariaderr@gmail.com>
+#
+# Licence: BSD 3 clause
+
 import numpy as np
 from sklearn.base import BaseEstimator, DensityMixin, ClassifierMixin, TransformerMixin
 from sklearn.utils.validation import check_X_y, check_array, check_is_fitted

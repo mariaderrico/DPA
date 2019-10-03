@@ -1,5 +1,9 @@
 # file '_PAk.pyx'. 
-# cython: cdivision=True
+#
+# Author: Maria d'Errico <mariaderr@gmail.com>
+#
+# Licence: BSD 3 clause
+
 import numpy as np
 cimport numpy as c_np
 from math import log, sqrt, exp, lgamma, pi, pow

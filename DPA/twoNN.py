@@ -1,6 +1,9 @@
-"""
-TWO-NN: Intrinsic dimension estimator by a minimal neighborhood information.
-"""
+# TWO-NN: Intrinsic dimension estimator by a minimal neighborhood information.
+#
+# Author: Maria d'Errico <mariaderr@gmail.com>
+#
+# Licence: BSD 3 clause
+
 import numpy as np
 import heapq
 from sklearn.base import BaseEstimator, ClassifierMixin, TransformerMixin, DensityMixin
