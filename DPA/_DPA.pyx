@@ -1,4 +1,11 @@
 # file '_DPA.pyx'. 
+# Non-parametric Density Peak clustering: 
+# Automatic topography of high-dimensional data sets 
+#
+# Author: Maria d'Errico <mariaderr@gmail.com>
+#
+# Licence: BSD 3 clause
+
 import numpy as np
 cimport numpy as c_np
 
@@ -42,7 +49,7 @@ def initial_assignment(g, N, indices, centers):
     return clu_labels
 
 
-def get_borders( N, k_hat, indices, clu_labels, Nclus, g, densities, err_densities):
+def get_borders( N, k_hat, indices, clu_labels, Nclus, g, densities, err_densities, Z, centers):
     cdef dict border_dict = {}
     cdef dict g_saddle = {}
     cdef int i, k, j, c, cp, m_c, M_c
@@ -73,6 +80,7 @@ def get_borders( N, k_hat, indices, clu_labels, Nclus, g, densities, err_densiti
                     if (m_c, M_c) not in g_saddle.keys() or g[i] > g_saddle[(m_c,M_c)][1]:
                         g_saddle[(m_c,M_c)] = (i, g[i])
 
+    # Fill in the border density matrix
     cdef c_np.ndarray[double, ndim=2] Rho_bord = np.zeros((Nclus,Nclus),dtype=float)
     cdef c_np.ndarray[double, ndim=2] Rho_bord_err = np.zeros((Nclus,Nclus),dtype=float)
     for c,cp in g_saddle.keys():
@@ -84,4 +92,107 @@ def get_borders( N, k_hat, indices, clu_labels, Nclus, g, densities, err_densiti
     for c in range(0,Nclus):
         Rho_bord[c][c] = -1
         Rho_bord_err[c][c] = 0
-    return Rho_bord, Rho_bord_err
+
+    # Merging
+    cdef int check = 1
+    cdef float rho_bord_max
+    cdef float a1, a2, e1, e2
+    cdef int cmax, cmin
+    cdef dict M = {}
+    cdef dict D = {}
+    cdef list S
+    while(check == 1):
+        check=0
+        rho_bord_max = 0
+        # check if any pairs of clusters has to be merged
+        for c,cp in g_saddle.keys():
+            a1 = densities[centers[c]]-Rho_bord[c][cp]
+            a2 = densities[centers[cp]]-Rho_bord[c][cp]
+            e1 = Z*(err_densities[centers[c]]+Rho_bord_err[c][cp])
+            e2 = Z*(err_densities[centers[cp]]+Rho_bord_err[c][cp])
+            if a1<e1 or a2<e2:
+                check = 1
+                # Select the pair (imax, jmax) with the highest border density
+                # imax will correspond to the peak with highest density
+                if Rho_bord[c][cp]> rho_bord_max:
+                    rho_bord_max = Rho_bord[c][cp]
+                    cmax = c
+                    cmin = cp
+                    if densities[centers[c]]<densities[centers[cp]]:
+                         cmax = cp
+                         cmin = c
+        if check:
+            # Store the clusters labels to merge in assignment
+            M[cmin]=cmax
+            # Update topography
+            Rho_bord[cmax][cmin] = -1
+            Rho_bord[cmin][cmax] = -1
+            Rho_bord_err[cmax][cmin] = 0
+            Rho_bord_err[cmin][cmax] = 0
+            del g_saddle[(min(cmax,cmin), max(cmax,cmin))]
+            S = list(g_saddle.keys()) 
+            for c,cp in S:
+                if c==cmin and cp!=cmax:
+                    # The cluster cmax inherits the clusters neighboring to cmin if with higher border densities
+                    if Rho_bord[cmax][cp] < Rho_bord[cmin][cp]:
+                        Rho_bord[cmax][cp] = Rho_bord[cmin][cp]
+                        Rho_bord[cp][cmax] = Rho_bord[cmin][cp]
+                        Rho_bord_err[cmax][cp] = Rho_bord_err[cmin][cp]
+                        Rho_bord_err[cp][cmax] = Rho_bord_err[cmin][cp]
+                        g_saddle[(min(cmax,cp), max(cmax,cp))] = g_saddle[(cmin, cp)]
+                    else:
+                        pass
+                    # Delete border information between cmin and cp
+                    del g_saddle[(c,cp)]
+                    Rho_bord[c][cp]=-1
+                    Rho_bord[cp][c]=-1
+                    Rho_bord_err[cp][c]=0
+                    Rho_bord_err[c][cp]=0
+                elif c!=cmax and cp==cmin:
+                    if Rho_bord[cmax][c] < Rho_bord[cmin][c]:
+                        Rho_bord[cmax][c] = Rho_bord[cmin][c]
+                        Rho_bord[c][cmax] = Rho_bord[cmin][c]
+                        Rho_bord_err[cmax][c] = Rho_bord_err[cmin][c]
+                        Rho_bord_err[c][cmax] = Rho_bord_err[cmin][c]
+                        g_saddle[(min(cmax,c), max(cmax,c))] = g_saddle[(c, cmin)]
+                    else:
+                        pass
+                    # Delete border information between cmin and c
+                    del g_saddle[(c,cp)]
+                    Rho_bord[c][cp]=-1
+                    Rho_bord[cp][c]=-1
+                    Rho_bord_err[cp][c]=0
+                    Rho_bord_err[c][cp]=0
+                else:
+                    pass
+
+    # Update clustering lables for merged clusters    
+    for c in M.keys():
+        for i in range(N):
+            if clu_labels[i]==c:
+                clu_labels[i]=M[c]
+
+    # Rename the labels of the final clusters
+    Nclus_m = 0
+    for i in set(clu_labels):
+        D[i] = Nclus_m+1
+        Nclus_m +=1 
+    for i in range(N):
+        clu_labels[i] = D[clu_labels[i]]
+
+    # Update topography
+    cdef c_np.ndarray[double, ndim=2] Rho_bord_m = np.zeros((Nclus_m,Nclus_m),dtype=float)
+    cdef c_np.ndarray[double, ndim=2] Rho_bord_err_m = np.zeros((Nclus_m,Nclus_m),dtype=float)
+    for c,cp in g_saddle.keys():
+        i = g_saddle[(c,cp)][0]
+        c = D[c]-1
+        cp = D[cp]-1
+        Rho_bord_m[c][cp] = densities[i]
+        Rho_bord_m[cp][c] = densities[i]
+        Rho_bord_err_m[c][cp] = err_densities[i]
+        Rho_bord_err_m[cp][c] = err_densities[i]
+    for c in range(0,Nclus_m): 
+        Rho_bord_m[c][c] = -1
+        Rho_bord_err_m[c][c] = 0
+
+    return Rho_bord_m, Rho_bord_err_m, clu_labels, Nclus_m

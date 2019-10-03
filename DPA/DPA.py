@@ -1,7 +1,10 @@
-"""
-Non-parametric Density Peak clustering: 
-Automatic topography of high-dimensional data sets 
-"""
+# Non-parametric Density Peak clustering: 
+# Automatic topography of high-dimensional data sets 
+#
+# Author: Maria d'Errico <mariaderr@gmail.com>
+#
+# Licence: BSD 3 clause
+
 import numpy as np
 from sklearn.base import BaseEstimator, DensityMixin, ClassifierMixin, TransformerMixin
 from sklearn.utils.validation import check_X_y, check_array, check_is_fitted
@@ -82,19 +85,18 @@ def _DensityPeakAdvanced(densities, err_densities, k_hat, distances, indices, Z)
     # Finding saddle points between pair of clusters c and c'.
     # Criterion 1 from Heuristic 2:
     # point i belonging to c is at the border if its closest point j belonging to c′ is within a distance k_hat[i] 
-    Rho_bord, Rho_bord_err = _DPA.get_borders(N, k_hat, indices, clu_labels, Nclus, g, densities, err_densities)
-
-    topography_temp = []
+    Rho_bord, Rho_bord_err, clu_lables, Nclus = _DPA.get_borders(N, k_hat, indices, 
+                                                                    clu_labels, Nclus, 
+                                                          g, densities, err_densities,
+                                                          Z, centers)
+    topography = []
     for i in range(0, Nclus-1):
         for j in range(i+1, Nclus):
-            topography_temp.append([i,j, Rho_bord[i][j], Rho_bord_err[i][j]])
+            topography.append([i,j, Rho_bord[i][j], Rho_bord_err[i][j]])
     
-    # Merging:
-    # TODO
-
     labels = clu_labels
 
-    return labels, topography_temp, g, centers
+    return labels, topography, g, centers
 
    
 class DensityPeakAdvanced(BaseEstimator, DensityMixin):
@@ -280,13 +282,6 @@ class DensityPeakAdvanced(BaseEstimator, DensityMixin):
             else:
                 pass
 
-        """
-        if self.k_max > X.shape[0]:
-            self.k_max = int(X.shape[0]/2)
-        if self.k_max < 3:
-            raise ValueError("k_max is below 3, the minimum value required for \
-                        statistical significance. Please use a larger datasets.")
-        """
     
         # If densities, uncertainties and k_hat are provided as input, compute only the
         # matrix of nearest neighbor: 
@@ -316,7 +311,7 @@ class DensityPeakAdvanced(BaseEstimator, DensityMixin):
         else:
             # TODO: implement option for kNN
             pass
-
+        
         self.labels_, self.topography_, self.g_, self.centers_ = _DensityPeakAdvanced(self.densities, 
                                                               self.err_densities, self.k_hat,
                                                               self.distances_, self.indices_, self.Z)
