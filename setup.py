@@ -3,14 +3,14 @@
 
 import codecs
 import os
-import numpy 
+#import numpy 
 
 from setuptools import find_packages, setup, Extension
-from Cython.Build import cythonize
-numpy_include_dir = numpy.get_include()
+#from Cython.Build import cythonize
+#numpy_include_dir = numpy.get_include()
 
 # get __version__ from _version.py
-ver_file = os.path.join('DPA', '_version.py')
+ver_file = os.path.join('Pipeline', '_version.py')
 with open(ver_file) as f:
     exec(f.read())
 
@@ -56,7 +56,7 @@ def configuration(parent_package='', top_path=None):
     config = Configuration('DPApipeline', parent_package, top_path)
     config.add_subpackage('DPA')
     return config
-
+"""
 EXTENSIONS = [
     Extension('DPA._DPA', [os.path.join('DPA', '_DPA.pyx')], #'DPA/_DPA.pyx'],
         #include_dirs=[numpy_include_dir,],
@@ -74,7 +74,7 @@ EXTENSIONS = [
             os.path.join('', 'NRmaxL.f90')])
 
 ]
-
+"""
 setup(name=DISTNAME,
       description=DESCRIPTION,
       author="Maria d'Errico",
