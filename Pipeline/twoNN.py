@@ -59,7 +59,7 @@ def _twoNearestNeighbors(distances, blockAn=True, block_ratio=20, frac=1):
     #y = [-log(1.-(i+1)/N) for i in range(len(x))]    
     y = [-log(1.-(i)/N) for i in range(len(x))]    
     # Fit the model y = a * x using np.linalg.lstsq
-    a, _, _, _ = np.linalg.lstsq(np.array(x)[:,np.newaxis], np.array(y))
+    a, _, _, _ = np.linalg.lstsq(np.array(x)[:,np.newaxis], np.array(y), rcond=None)
     id = a[0]
     
     # TODO: Implement block analysis and decimation plot. It doesn't affect the results.
