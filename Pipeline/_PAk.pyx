@@ -9,7 +9,7 @@ cimport numpy as c_np
 from math import log, sqrt, exp, lgamma, pi, pow
 from scipy.optimize import minimize
 import sys
-import NR
+from Pipeline import NR
 cimport cython
 
 DBL_MIN = sys.float_info.min

@@ -12,9 +12,8 @@ from sklearn.metrics import euclidean_distances
 from sklearn.neighbors import NearestNeighbors
 from sklearn.neighbors import kneighbors_graph
 from math import log, sqrt, exp, lgamma, pi, pow
-from .twoNN import twoNearestNeighbors
-from . import _PAk
-
+from Pipeline.twoNN import twoNearestNeighbors
+from Pipeline import _PAk
 
 VALID_METRIC = ['precomputed', 'euclidean']
 VALID_DIM = ['auto', 'twoNN']
