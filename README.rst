@@ -1,10 +1,8 @@
-DPApipeline implements the Density Peaks Advanced clustering algorithm introduced in the paper `DPA`_.
+Density Peaks Advanced clustering
+=================================
 
-
-Overview
-========
-
-DPApipeline offers the following features:
+The DPApipeline package implements the Density Peaks Advanced clustering algorithm as introduced in the paper `DPA`_.
+The package offers the following features:
 
 * Intrinsic dimensionality estimation by means of the `TWO-NN`_ algorithm
 * Adaptive k-NN Density estimation by means of the `PAk`_ algorithm
