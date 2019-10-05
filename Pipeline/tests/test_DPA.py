@@ -8,7 +8,7 @@ from sklearn.datasets import load_iris
 from sklearn.utils.testing import assert_array_equal
 from sklearn.utils.testing import assert_allclose
 
-from DPA import DensityPeakAdvanced
+from Pipeline.DPA import DensityPeakAdvanced
 
 @pytest.fixture
 def data_Fig1():
@@ -16,12 +16,6 @@ def data_Fig1():
     data_F1 = pd.read_csv("./benchmarks/Fig1.dat", sep=" ", header=None)
     return data_F1
 
-@pytest.fixture
-def output_Fig1_labels():
-    # Read benchmark output of the DPA algorithm: right after labels assignation
-    out_F1 = pd.read_csv("./benchmarks/output_Fig1_labels.csv", header=None)
-    out_F1.columns = ["i", "clu"]
-    return out_F1
 
 @pytest.fixture
 def output_Fig1_g():
@@ -35,6 +29,13 @@ def output_Fig1_borders():
     # Read benchmark output of the DPA algorithm: right after border calculation, before merging
     out_F1 = pd.read_csv("./benchmarks/output_Fig1_borders.csv", header=None)
     out_F1.columns = ["i", "j", "rho_b", "err_rho_b"]
+    return out_F1
+
+@pytest.fixture
+def output_Fig1_labels():
+    # Read benchmark final output of the DPA algorithm 
+    out_F1 = pd.read_csv("./benchmarks/output_Fig1_labels.csv", header=None)
+    out_F1.columns = ["clu"]
     return out_F1
 
 
@@ -53,7 +54,8 @@ def test_PointAdaptive_kNN(data_Fig1, output_Fig1_labels, output_Fig1_g, output_
     assert len(data_Fig1) == len(est.densities)
     
     npt.assert_almost_equal(est.g_, output_Fig1_g["g"], decimal=2)
-    #assert_array_equal(est.labels_, output_Fig1_labels["clu"])
+    #npt.assert_almost_equal(est.g_, output_Fig1_g["g"], decimal=2)
+    assert_array_equal(est.labels_, output_Fig1_labels["clu"])
     assert_array_equal(est.topography_, np.ones(len(data_Fig1), dtype=np.int64))
 
 
