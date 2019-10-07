@@ -153,14 +153,14 @@ class twoNearestNeighbors(BaseEstimator, DensityMixin):
 
         if self.metric == "precomputed":
             # TODO: handle identical distances
-            nbrs = NearestNeighbors(n_neighbors=100, # Only two neighbors used; the point i is counted in its neighborhood
+            nbrs = NearestNeighbors(n_neighbors=3, # Only two neighbors used; the point i is counted in its neighborhood
                                           algorithm="brute",
                                         metric=self.metric,
                                         n_jobs=self.n_jobs).fit(X)
         else:
             # Remove duplicates coordinates
             X = np.unique(X, axis=0)
-            nbrs = NearestNeighbors(n_neighbors=100, # Only two neighbors used; the point i is counted in its neighborhood
+            nbrs = NearestNeighbors(n_neighbors=3, # Only two neighbors used; the point i is counted in its neighborhood
                                          algorithm="auto",
                                         metric=self.metric, 
                                         n_jobs=self.n_jobs).fit(X)
