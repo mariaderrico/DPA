@@ -8,7 +8,7 @@ from sklearn.datasets import load_iris
 from sklearn.utils.testing import assert_array_equal
 from sklearn.utils.testing import assert_allclose
 
-from DPA import twoNearestNeighbors
+from Pipeline.twoNN import twoNearestNeighbors
 
 
 @pytest.fixture
