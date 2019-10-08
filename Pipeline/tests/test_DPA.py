@@ -38,8 +38,25 @@ def output_Fig1_labels():
     out_F1.columns = ["clu"]
     return out_F1
 
+@pytest.fixture
+def output_Fig1_labelsHalos():
+    # Read benchmark final output of the DPA algorithm 
+    out_F1 = pd.read_csv("./benchmarks/output_Fig1_labelsHalos.csv", header=None)
+    out_F1.columns = ["clu"]
+    return out_F1
 
-def test_PointAdaptive_kNN(data_Fig1, output_Fig1_labels, output_Fig1_borders):
+def is_almost_equal(x,y,mismatch, decimal):
+    d = 0
+    for i in range(len(x)):
+        if abs(x[i]-y[i]) > 1.5 * 10**(-decimal):
+            d += 1
+    print(d/len(x)*100)
+    if d/len(x)*100>mismatch:
+        npt.assert_almost_equal(x, y, decimal=decimal)
+    else:
+        assert True
+
+def test_PointAdaptive_kNN(data_Fig1, output_Fig1_labels, output_Fig1_labelsHalos, output_Fig1_borders):
     est = DensityPeakAdvanced(Z=1.5, n_jobs=-1)
     assert est.dim == None
     assert est.k_max == 1000
@@ -54,6 +71,8 @@ def test_PointAdaptive_kNN(data_Fig1, output_Fig1_labels, output_Fig1_borders):
     assert len(data_Fig1) == len(est.densities)
     
     assert_array_equal(est.labels_, output_Fig1_labels["clu"])
+    is_almost_equal(est.halos_, output_Fig1_labelsHalos["clu"], 0.01, 0)
+    #assert_array_equal(est.halos_, output_Fig1_labelsHalos["clu"])
 
     assert_array_equal([est.topography_[i][0]+1 for i in range(len(est.topography_))], output_Fig1_borders["i"])
     assert_array_equal([est.topography_[i][1]+1 for i in range(len(est.topography_))], output_Fig1_borders["j"])
