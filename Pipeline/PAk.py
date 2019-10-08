@@ -233,12 +233,12 @@ class PointAdaptive_kNN(BaseEstimator, DensityMixin):
 
         if self.metric == "precomputed":
             nbrs = NearestNeighbors(n_neighbors=self.k_max+1, # The point i is counted in its neighborhood 
-                                          algorithm="auto", 
+                                          algorithm="brute", 
                                         metric=self.metric,
                                         n_jobs=self.n_jobs).fit(X)
         else:
             nbrs = NearestNeighbors(n_neighbors=self.k_max+1, # The point i is counted in its neighborhood 
-                                         algorithm="brute", 
+                                         algorithm="auto", 
                                         metric=self.metric, 
                                         n_jobs=self.n_jobs).fit(X)
         self.distances_, self.indices_ = nbrs.kneighbors(X) 
