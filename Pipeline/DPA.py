@@ -55,6 +55,10 @@ def _DensityPeakAdvanced(densities, err_densities, k_hat, distances, indices, Z)
     -------
     labels : array [Nclus]
         The clustering labels assigned to each point in the data set.
+
+    halos : array [Nclus]
+        The clustering labels assigned to each point in the data set. Points identified as halos have 
+        clustering lable equal to zero.
     
     topography : array [Nclus, Nclus]
         Let be Nclus the number of clusters, the topography consists in a Nclus × Nclus symmetric matrix,
@@ -84,20 +88,22 @@ def _DensityPeakAdvanced(densities, err_densities, k_hat, distances, indices, Z)
     # Topography reconstruction
     #--------------------------
     # Finding saddle points between pair of clusters c and c'.
-    # Criterion 1 from Heuristic 2:
-    # point i belonging to c is at the border if its closest point j belonging to c′ is within a distance k_hat[i] 
-    Rho_bord, Rho_bord_err, clu_lables, Nclus = _DPA.get_borders(N, k_hat, indices, 
-                                                                    clu_labels, Nclus, 
-                                                          g, densities, err_densities,
-                                                          Z, centers)
+    # Halo points are also dentified as the points whose density is lower than 
+    # the density of the lowest saddle point, manely the set of points 
+    # whose assignation is not reliable. The clustering labels for halo point is set to 0.
+    Rho_bord, Rho_bord_err, clu_labels, clu_halos, Nclus = _DPA.get_borders(N, k_hat, indices, 
+                                                                            clu_labels, Nclus, 
+                                                                  g, densities, err_densities,
+                                                                                   Z, centers)
     topography = []
     for i in range(0, Nclus-1):
         for j in range(i+1, Nclus):
             topography.append([i,j, Rho_bord[i][j], Rho_bord_err[i][j]])
-    
-    labels = clu_labels
 
-    return labels, topography, g, centers
+    labels = clu_labels
+    halos = clu_halos
+
+    return labels, halos, topography, g, centers
 
    
 class DensityPeakAdvanced(BaseEstimator, DensityMixin):
@@ -187,6 +193,10 @@ class DensityPeakAdvanced(BaseEstimator, DensityMixin):
     ----------
     labels_ : array [Nclus]
         The clustering labels assigned to each point in the data set.
+
+    halos_ : array [Nclus]
+        The clustering labels assigned to each point in the data set. Points identified as halos have 
+        label equal to zero.
 
     topography_ : array [Nclus, Nclus]
         Let be Nclus the number of clusters, the topography consists in a Nclus × Nclus symmetric matrix, 
@@ -313,7 +323,7 @@ class DensityPeakAdvanced(BaseEstimator, DensityMixin):
             # TODO: implement option for kNN
             pass
         
-        self.labels_, self.topography_, self.g_, self.centers_ = _DensityPeakAdvanced(self.densities, 
+        self.labels_, self.halos_, self.topography_, self.g_, self.centers_ = _DensityPeakAdvanced(self.densities, 
                                                               self.err_densities, self.k_hat,
                                                               self.distances_, self.indices_, self.Z)
                                                               

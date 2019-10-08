@@ -8,6 +8,8 @@
 
 import numpy as np
 cimport numpy as c_np
+import copy
+
 
 def get_centers(N, indices, k_hat, g):
     cdef int i, j, c
@@ -54,6 +56,9 @@ def get_borders( N, k_hat, indices, clu_labels, Nclus, g, densities, err_densiti
     cdef dict g_saddle = {}
     cdef int i, k, j, c, cp, m_c, M_c
 
+    # Criterion 1 from Heuristic 2:
+    # point i belonging to c is at the border if its closest point j belonging to c′ is 
+    #within a distance k_hat[i] 
     for i in range(0,N):
         for k in range(0,k_hat[i]):
             j = indices[i][k+1]
@@ -181,12 +186,21 @@ def get_borders( N, k_hat, indices, clu_labels, Nclus, g, densities, err_densiti
         clu_labels[i] = D[clu_labels[i]]
 
     # Update topography
+    cdef c_np.ndarray[double, ndim=1] min_rho_bord = np.zeros(Nclus_m)
     cdef c_np.ndarray[double, ndim=2] Rho_bord_m = np.zeros((Nclus_m,Nclus_m),dtype=float)
     cdef c_np.ndarray[double, ndim=2] Rho_bord_err_m = np.zeros((Nclus_m,Nclus_m),dtype=float)
     for c,cp in g_saddle.keys():
         i = g_saddle[(c,cp)][0]
         c = D[c]-1
         cp = D[cp]-1
+        if densities[i]>min_rho_bord[c]:
+            min_rho_bord[c] = densities[i]
+        else:
+            pass
+        if densities[i]> min_rho_bord[cp]:
+           min_rho_bord[cp] = densities[i]
+        else:
+            pass
         Rho_bord_m[c][cp] = densities[i]
         Rho_bord_m[cp][c] = densities[i]
         Rho_bord_err_m[c][cp] = err_densities[i]
@@ -195,4 +209,17 @@ def get_borders( N, k_hat, indices, clu_labels, Nclus, g, densities, err_densiti
         Rho_bord_m[c][c] = -1
         Rho_bord_err_m[c][c] = 0
 
-    return Rho_bord_m, Rho_bord_err_m, clu_labels, Nclus_m
+    # Halos
+    cdef c_np.ndarray[long, ndim=1] clu_halos = copy.deepcopy(clu_labels)
+    clu_halos = find_halos(min_rho_bord, clu_halos, densities)
+
+    return Rho_bord_m, Rho_bord_err_m, clu_labels, clu_halos, Nclus_m
+
+def find_halos(min_rho_bord, clu_halos, densities):
+    cdef int i
+    for i in range(len(densities)):
+        if densities[i]<min_rho_bord[clu_halos[i]-1] and min_rho_bord[clu_halos[i]-1]>0:
+            clu_halos[i]=0
+    return clu_halos
+
+
