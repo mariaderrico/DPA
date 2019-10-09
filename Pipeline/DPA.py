@@ -58,7 +58,7 @@ def _DensityPeakAdvanced(densities, err_densities, k_hat, distances, indices, Z)
 
     halos : array [Nclus]
         The clustering labels assigned to each point in the data set. Points identified as halos have 
-        clustering lable equal to zero.
+        clustering lable equal to -1.
     
     topography : array [Nclus, Nclus]
         Let be Nclus the number of clusters, the topography consists in a Nclus × Nclus symmetric matrix,
@@ -90,7 +90,7 @@ def _DensityPeakAdvanced(densities, err_densities, k_hat, distances, indices, Z)
     # Finding saddle points between pair of clusters c and c'.
     # Halo points are also dentified as the points whose density is lower than 
     # the density of the lowest saddle point, manely the set of points 
-    # whose assignation is not reliable. The clustering labels for halo point is set to 0.
+    # whose assignation is not reliable. The clustering labels for halo point is set to -1.
     Rho_bord, Rho_bord_err, clu_labels, clu_halos, Nclus = _DPA.get_borders(N, k_hat, indices, 
                                                                             clu_labels, Nclus, 
                                                                   g, densities, err_densities,

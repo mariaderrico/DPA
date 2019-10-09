@@ -178,9 +178,10 @@ def get_borders( N, k_hat, indices, clu_labels, Nclus, g, densities, err_densiti
                 clu_labels[i]=M[c]
 
     # Rename the labels of the final clusters
+    # Clusters labels go from 0 to Nclus_m-1
     Nclus_m = 0
     for i in set(clu_labels):
-        D[i] = Nclus_m+1
+        D[i] = Nclus_m
         Nclus_m +=1 
     for i in range(N):
         clu_labels[i] = D[clu_labels[i]]
@@ -191,8 +192,8 @@ def get_borders( N, k_hat, indices, clu_labels, Nclus, g, densities, err_densiti
     cdef c_np.ndarray[double, ndim=2] Rho_bord_err_m = np.zeros((Nclus_m,Nclus_m),dtype=float)
     for c,cp in g_saddle.keys():
         i = g_saddle[(c,cp)][0]
-        c = D[c]-1
-        cp = D[cp]-1
+        c = D[c]
+        cp = D[cp]
         if densities[i]>min_rho_bord[c]:
             min_rho_bord[c] = densities[i]
         else:
@@ -218,8 +219,8 @@ def get_borders( N, k_hat, indices, clu_labels, Nclus, g, densities, err_densiti
 def find_halos(min_rho_bord, clu_halos, densities):
     cdef int i
     for i in range(len(densities)):
-        if densities[i]<min_rho_bord[clu_halos[i]-1] and min_rho_bord[clu_halos[i]-1]>0:
-            clu_halos[i]=0
+        if densities[i]<min_rho_bord[clu_halos[i]] and min_rho_bord[clu_halos[i]]>0:
+            clu_halos[i]=-1
     return clu_halos
 
 
