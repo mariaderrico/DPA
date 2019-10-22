@@ -13,13 +13,13 @@ from sklearn.metrics.cluster import normalized_mutual_info_score
 def plot_w_noise(ax,data,labels,noise_id):
     x=data[:,0]
     y=data[:,1]
+    xp=x[labels==noise_id]
+    yp=y[labels==noise_id]
+    ax.scatter(xp,yp,s=15.,alpha=0.9, c='black',linewidths=0.0)
     xp=x[labels!=noise_id]
     yp=y[labels!=noise_id]
     cp=labels[labels!=noise_id]
     ax.scatter(xp,yp,s=15.,alpha=0.9, c=cp,linewidths=0.0,cmap='tab10')
-    xp=x[labels==noise_id]
-    yp=y[labels==noise_id]
-    ax.scatter(xp,yp,s=15.,alpha=0.9, c='black',linewidths=0.0)
     return ax
 def plot_no_noise(ax,data,labels):
     x=data[:,0]
