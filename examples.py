@@ -34,7 +34,7 @@ class example:
         self.dpgmm_time=None
         self.dp=None
         self.dp_percent=None
-        self.dp_den_type=None
+        self.dp_dens_type=None
         self.dp_delta_cut=None
         self.dp_dens_cut=None
         self.dp_time=None
