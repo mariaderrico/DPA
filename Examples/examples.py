@@ -5,7 +5,7 @@ from Pipeline import DPA
 import hdbscan
 import sklearn.cluster as cluster
 from sklearn import mixture
-import DP 
+from DP import DP 
 import time
 class example:
     def __init__(self, name):
