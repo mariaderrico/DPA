@@ -1,9 +1,10 @@
 import numpy as np
+import sys
+sys.path.append('../')
 from Pipeline import DPA
 import hdbscan
 import sklearn.cluster as cluster
 import matplotlib.pyplot as plt
-from examples import example
 import scipy as sp
 from sklearn import manifold
 from scipy import cluster
