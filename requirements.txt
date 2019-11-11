@@ -4,3 +4,5 @@ scipy
 scikit-learn
 easycython
 jupyter
+py-cpuinfo
+tabulate
