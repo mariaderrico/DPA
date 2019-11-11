@@ -1,9 +1,11 @@
 import numpy as np
+import sys
+sys.path.append('../')
 from Pipeline import DPA
 import hdbscan
 import sklearn.cluster as cluster
 from sklearn import mixture
-from DP import Density_Peaks_clustering
+import DP 
 import time
 class example:
     def __init__(self, name):
@@ -65,7 +67,7 @@ class example:
         end=time.time()
         self.spect_time=end-start
     def exe_dp(self):
-        self.dp =Density_Peaks_clustering(dens_type=self.dp_dens_type) 
+        self.dp = DP.Density_Peaks_clustering(dens_type=self.dp_dens_type) 
         start=time.time()
         self.dp.get_decision_graph(self.data)
         self.dp.delta_cut=self.dp_delta_cut
