@@ -252,7 +252,7 @@ class DensityPeakAdvanced(BaseEstimator, DensityMixin):
         if density_algo not in VALID_DENSITY:
             raise ValueError("invalid dim_algo: '{0}'".format(density_algo))
 
-        if self.densities or self.err_densities  or self.k_hat:
+        if not (self.densities and self.err_densities  and self.k_hat):
             # TODO: decide whether to raise a worning instead and automatically run PAk. 
             raise ValueError("DPA requires the error estimation and optimal neighborhood along \
                               with the densities. If not available, use the default PAk estimator") 
