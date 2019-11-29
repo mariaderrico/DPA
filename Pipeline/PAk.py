@@ -97,6 +97,12 @@ class PointAdaptive_kNN(BaseEstimator, DensityMixin):
         Method for intrinsic dimensionality calculation. If dim_algo is "auto", dim is assumed to be
         equal to n_samples. If dim_algo is a string, it must be one of the options allowed by VALID_DIM. 
 
+    nn_distances  : array [n_samples, k_max+1]
+        Distances to the k_max neighbors of each points.
+
+    nn_indices : array [n_samples, k_max+1]
+        Indices of the k_max neighbors of each points.
+ 
     blockAn : bool, default=True
         This parameter is considered if dim_algo is "twoNN", it is ignored otherwise.
         If blockAn is True the algorithm perform a block analysis that allows discriminating the relevant dimensions 
@@ -171,12 +177,15 @@ class PointAdaptive_kNN(BaseEstimator, DensityMixin):
     # TODO
         
     """
-    def __init__(self, k_max=1000, D_thr=23.92812698, metric="euclidean", dim_algo="auto", 
+    def __init__(self, k_max=1000, D_thr=23.92812698, metric="euclidean", dim_algo="auto",
+                       nn_distances=None, nn_indices=None, 
                        blockAn=True, block_ratio=20, frac=1, dim=None, n_jobs=None):
         self.k_max = k_max
         self.D_thr = D_thr
         self.metric = metric
         self.dim_algo = dim_algo
+        self.nn_distances = nn_distances
+        self.nn_indices = nn_indices
         self.blockAn = blockAn
         self.block_ratio = block_ratio
         self.frac = frac
@@ -231,18 +240,26 @@ class PointAdaptive_kNN(BaseEstimator, DensityMixin):
             raise ValueError("k_max is below 3, the minimum value required for \
                         statistical significance. Please use a larger datasets.")
 
-        if self.metric == "precomputed":
+        # check if NN matrix is precomputed:
+        if self.nn_distances is not None and self.nn_indices is not None:
+            # overwrite the self.k_max
+            self.k_max = self.nn_distances.shape[1]-1
+            self.distances_ = self.nn_distances
+            self.indices_ = self.nn_indices
+        elif self.metric == "precomputed":
             nbrs = NearestNeighbors(n_neighbors=self.k_max+1, # The point i is counted in its neighborhood 
                                           algorithm="brute", 
                                         metric=self.metric,
                                         n_jobs=self.n_jobs).fit(X)
+            self.distances_, self.indices_ = nbrs.kneighbors(X)
         else:
             nbrs = NearestNeighbors(n_neighbors=self.k_max+1, # The point i is counted in its neighborhood 
                                          algorithm="auto", 
                                         metric=self.metric, 
                                         n_jobs=self.n_jobs).fit(X)
-        self.distances_, self.indices_ = nbrs.kneighbors(X) 
+            self.distances_, self.indices_ = nbrs.kneighbors(X) 
 
+        
         self.densities_, self.err_densities_, self.k_hat_, self.dc_ = _PointAdaptive_kNN(self.distances_, 
                                                                                  self.indices_,
                                                                               k_max=self.k_max, 

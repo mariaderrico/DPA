@@ -330,10 +330,19 @@ class DensityPeakAdvanced(BaseEstimator, DensityMixin):
                                                 n_jobs=self.n_jobs).fit(X)
                 self.distances_, self.indices_ = nbrs.kneighbors(X) 
         elif self.density_algo == "PAk":
-            PAk = PointAdaptive_kNN(k_max=self.k_max, D_thr=self.D_thr, metric=self.metric, 
-                                               dim_algo=self.dim_algo, blockAn=self.blockAn, 
-                                               block_ratio=self.block_ratio,
-                                               frac=self.frac, dim=self.dim, n_jobs=self.n_jobs).fit(X)
+            # If the nearest neighbors matrix is precomputed:
+            if self.nn_distances is not None and self.nn_indices is not None:
+                self.k_max = self.k_max = self.nn_distances.shape[1]-1
+                PAk = PointAdaptive_kNN(k_max=self.k_max, D_thr=self.D_thr, metric=self.metric,
+                                                   nn_distances=self.nn_distances, nn_indices=self.nn_indices,
+                                                   dim_algo=self.dim_algo, blockAn=self.blockAn,
+                                                   block_ratio=self.block_ratio,
+                                                   frac=self.frac, dim=self.dim, n_jobs=self.n_jobs).fit(X)
+            else:
+                PAk = PointAdaptive_kNN(k_max=self.k_max, D_thr=self.D_thr, metric=self.metric, 
+                                                   dim_algo=self.dim_algo, blockAn=self.blockAn, 
+                                                   block_ratio=self.block_ratio,
+                                                   frac=self.frac, dim=self.dim, n_jobs=self.n_jobs).fit(X)
             self.distances_ = PAk.distances_
             self.indices_ = PAk.indices_ 
             self.densities = PAk.densities_
