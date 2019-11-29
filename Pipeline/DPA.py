@@ -140,6 +140,12 @@ class DensityPeakAdvanced(BaseEstimator, DensityMixin):
     k_hat : array [n_samples], default = None
         The optimal number of neighbors for which the condition of constant density holds.
 
+    nn_distances  : array [n_samples, k_max+1]
+        Distances to the k_max neighbors of each points.
+
+    nn_indices : array [n_samples, k_max+1]
+        Indices of the k_max neighbors of each points.
+
     density_algo : string, default = "PAk"
         Define the algorithm to use as density estimator. It mast be one of the options allowed by 
         VALID_DENSITY. 
@@ -182,6 +188,7 @@ class DensityPeakAdvanced(BaseEstimator, DensityMixin):
     frac : float, default=1
         This parameter is considered if dim_algo is "twoNN", it is ignored otherwise.
         Define the fraction of points in the data set used for ID calculation. By default the full data set is used.   
+
     n_jobs : int or None, optional (default=None)
         The number of jobs to use for the computation. This works by computing
         each of the n_init runs in parallel.
@@ -226,6 +233,7 @@ class DensityPeakAdvanced(BaseEstimator, DensityMixin):
     """
 
     def __init__(self, Z=1, metric="euclidean", densities=None, err_densities=None, k_hat=None,
+                      nn_distances=None, nn_indices=None,
                       density_algo="PAk", k_max=1000, D_thr=23.92812698, dim=None, dim_algo="twoNN", 
                        blockAn=True, block_ratio=20, frac=1, n_jobs=None):
         self.Z = Z
@@ -233,6 +241,8 @@ class DensityPeakAdvanced(BaseEstimator, DensityMixin):
         self.densities = densities
         self.err_densities = err_densities
         self.k_hat = k_hat
+        self.nn_distances = nn_distances
+        self.nn_indices = nn_indices
         self.density_algo = density_algo
         self.k_max = k_max
         self.D_thr = D_thr
@@ -260,7 +270,10 @@ class DensityPeakAdvanced(BaseEstimator, DensityMixin):
         if self.dim_algo == "twoNN" and self.frac > 1:
             raise ValueError("frac should be between 0 and 1.")
 
-        
+        if self.nn_distances is not None and self.nn_indices is not None:        
+            if self.nn_distances.shape[1] != self.nn_indices.shape[1]:
+                raise ValueError("check nn_distances and nn_indices. Mismatch in array dimension.")
+ 
     def fit(self, X, y=None):
         """Fit the DPA clustering on the data.
 
@@ -294,21 +307,28 @@ class DensityPeakAdvanced(BaseEstimator, DensityMixin):
                 pass
 
     
+            
         # If densities, uncertainties and k_hat are provided as input, compute only the
         # matrix of nearest neighbor: 
         if self.densities and self.err_densities and self.k_hat:
-            self.k_max = max(self.k_hat)
-            if self.metric == "precomputed":
-                nbrs = NearestNeighbors(n_neighbors=self.k_max+1, # The point i is counted in its neighborhood 
-                                              algorithm="brute", 
-                                            metric=self.metric,
-                                            n_jobs=self.n_jobs).fit(X)
+            # If the nearest neighbors matrix is precomputed:
+            if self.nn_distances is not None and self.nn_indices is not None:
+                self.k_max = self.nn_distances.shape[1]-1
+                self.distances_ = self.nn_distances
+                self.indices_ = self.nn_indices
             else:
-                nbrs = NearestNeighbors(n_neighbors=self.k_max+1, # The point i is counted in its neighborhood 
-                                             algorithm="auto", 
-                                            metric=self.metric, 
-                                            n_jobs=self.n_jobs).fit(X)
-            self.distances_, self.indices_ = nbrs.kneighbors(X) 
+                self.k_max = max(self.k_hat)
+                if self.metric == "precomputed":
+                    nbrs = NearestNeighbors(n_neighbors=self.k_max+1, # The point i is counted in its neighborhood 
+                                                  algorithm="brute", 
+                                                metric=self.metric,
+                                                n_jobs=self.n_jobs).fit(X)
+                else:
+                    nbrs = NearestNeighbors(n_neighbors=self.k_max+1, # The point i is counted in its neighborhood 
+                                                 algorithm="auto", 
+                                                metric=self.metric, 
+                                                n_jobs=self.n_jobs).fit(X)
+                self.distances_, self.indices_ = nbrs.kneighbors(X) 
         elif self.density_algo == "PAk":
             PAk = PointAdaptive_kNN(k_max=self.k_max, D_thr=self.D_thr, metric=self.metric, 
                                                dim_algo=self.dim_algo, blockAn=self.blockAn, 
