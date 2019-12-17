@@ -119,7 +119,6 @@ def get_densities(dim, distances, k_max, D_thr, indices):
     cdef double dc_i
     cdef c_np.ndarray[double, ndim=1] Vi 
     cdef float rho_min = DBL_MAX
-    cdef float val = DBL_MIN
     for i in range(0,N):
         k, dc_i, V_dic = ratio_test(i, N, V1, V_dic, dim, distances, k_max, D_thr, indices)
         k_hat.append(k-1)
@@ -130,10 +129,7 @@ def get_densities(dim, distances, k_max, D_thr, indices):
         densities.append(log(k-1)-(log(V1)+dim*log(dc[i]))) 
         err_densities.append(sqrt((4.*(k-1)+2.)/((k-1)*(k-2))))
         # Apply a correction to the density estimation if no neighbors are at the same distance from point i 
-        if all(x > val for x in V_dic[i] if x!=-1):
-            densities[i] = NR.nrmaxl(densities[i], k_hat[i], V_dic[i], k_max)
-        else:
-            pass
+        densities[i] = NR.nrmaxl(densities[i], k_hat[i], V_dic[i], k_max)
         if densities[i] < rho_min:
             rho_min = densities[i]
     # Apply shift to have all densities as positive values 

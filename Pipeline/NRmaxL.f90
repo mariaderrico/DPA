@@ -27,7 +27,7 @@ subroutine nrmaxl(rfin,maxk,rinit,kopt,v_dic)
   vi(1)=v_dic(1)
   do j=2,kopt
     vi(j)=v_dic(j)-v_dic(j-1)
-    if ((vi(j-1)<1D-300).and.(.not.kNN)) then
+    if ((vi(j)<1D-300).and.(.not.kNN)) then
        !write (6,*) rinit,kopt,kNN,vi(j),v_dic(j),v_dic(j-1),j
        kNN=.true.
     endif
