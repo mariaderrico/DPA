@@ -341,7 +341,7 @@ class DensityPeakAdvanced(BaseEstimator, DensityMixin):
         if self.densities and self.err_densities and self.k_hat:
             # If the nearest neighbors matrix is precomputed:
             if self.nn_distances is not None and self.nn_indices is not None:
-                self.k_max = self.nn_distances.shape[1]-1
+                self.k_max = max(self.k_hat) 
                 self.distances_ = self.nn_distances
                 self.indices_ = self.nn_indices
             else:
@@ -376,6 +376,7 @@ class DensityPeakAdvanced(BaseEstimator, DensityMixin):
             self.densities = PAk.densities_
             self.err_densities = PAk.err_densities_
             self.k_hat = PAk.k_hat_
+            self.k_max = max(self.k_hat)
         else:
             # TODO: implement option for kNN
             pass
