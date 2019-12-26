@@ -146,6 +146,19 @@ class DensityPeakAdvanced(BaseEstimator, DensityMixin):
     nn_indices : array [n_samples, k_max+1]
         Indices of the k_max neighbors of each points.
 
+    affinity : string or callable, default 'precomputed'
+        How to construct the affinity matrix.
+         - 'nearest_neighbors' : construct the affinity matrix by computing a
+           graph of nearest neighbors.
+         - 'rbf' : construct the affinity matrix using a radial basis function
+           (RBF) kernel.
+         - 'precomputed' : interpret ``X`` as a precomputed affinity matrix.
+         - 'precomputed_nearest_neighbors' : interpret ``X`` as a sparse graph
+           of precomputed nearest neighbors, and constructs the affinity matrix
+           by selecting the ``n_neighbors`` nearest neighbors.
+         - one of the kernels supported by
+           :func:`~sklearn.metrics.pairwise_kernels`.
+
     density_algo : string, default = "PAk"
         Define the algorithm to use as density estimator. It mast be one of the options allowed by 
         VALID_DENSITY. 
@@ -181,7 +194,7 @@ class DensityPeakAdvanced(BaseEstimator, DensityMixin):
         changes in the neighborhood size, which is crucial for ID estimations when the data lie on a 
         manifold perturbed by a high-dimensional noise. 
 
-    block_ratio : int, default=20
+    block_ratio : int, default=5
         This parameter is considered if dim_algo is "twoNN", it is ignored otherwise.
         Set the minimum size of the blocks as n_samples/block_ratio. If blockAn=False, block_ratio is ignored.
 
@@ -233,9 +246,9 @@ class DensityPeakAdvanced(BaseEstimator, DensityMixin):
     """
 
     def __init__(self, Z=1, metric="euclidean", densities=None, err_densities=None, k_hat=None,
-                      nn_distances=None, nn_indices=None,
+                      nn_distances=None, nn_indices=None, affinity='precomputed',
                       density_algo="PAk", k_max=1000, D_thr=23.92812698, dim=None, dim_algo="twoNN", 
-                       blockAn=True, block_ratio=20, frac=1, n_jobs=None):
+                       blockAn=True, block_ratio=5, frac=1, n_jobs=None):
         self.Z = Z
         self.metric = metric
         self.densities = densities
@@ -243,6 +256,7 @@ class DensityPeakAdvanced(BaseEstimator, DensityMixin):
         self.k_hat = k_hat
         self.nn_distances = nn_distances
         self.nn_indices = nn_indices
+        self.affinity = affinity
         self.density_algo = density_algo
         self.k_max = k_max
         self.D_thr = D_thr
@@ -281,7 +295,8 @@ class DensityPeakAdvanced(BaseEstimator, DensityMixin):
         ----------
         X : array [n_samples, n_samples] if metric == “precomputed”, or, 
             [n_samples, n_features] otherwise
-            The input samples.
+            The input samples. Similarities / affinities between
+            instances if ``affinity='precomputed'``.
 
         y : Ignored
             Not used, present here for API consistency by convention.
@@ -292,7 +307,20 @@ class DensityPeakAdvanced(BaseEstimator, DensityMixin):
             Returns self.
         """
         # Input validation
-        X = check_array(X, order='C', accept_sparse=True)
+        #X = check_array(X, order='C', accept_sparse=True)
+        X = check_array(X, accept_sparse=['csr', 'csc', 'coo'],
+                        dtype=np.float64, ensure_min_samples=2)
+
+        allow_squared = self.affinity in ["precomputed",
+                                          "precomputed_nearest_neighbors"]
+        if X.shape[0] == X.shape[1] and not allow_squared:
+            warnings.warn("The DPA clustering API has changed. ``fit``"
+                          "now constructs an affinity matrix from data. To use"
+                          " a custom affinity matrix, "
+                          "set ``affinity=precomputed``.")
+
+        if self.affinity == 'precomputed':
+            self.affinity_matrix_ = X
 
         if not self.dim:
             if self.dim_algo == "auto":
@@ -300,7 +328,7 @@ class DensityPeakAdvanced(BaseEstimator, DensityMixin):
             elif self.dim_algo == "twoNN":
                 if self.block_ratio >= X.shape[0]:
                     raise ValueError("block_ratio is larger than the sample size, the minimum size for \
-                                      block analysis would be zero. Please set a lower value.")
+                                      block analysis would be zero. Please set a value lower than "+str(X.shape[0]))
                 self.dim = twoNearestNeighbors(blockAn=self.blockAn, block_ratio=self.block_ratio, 
                                                frac=self.frac, n_jobs=self.n_jobs).fit(X).dim_
             else:
@@ -332,7 +360,7 @@ class DensityPeakAdvanced(BaseEstimator, DensityMixin):
         elif self.density_algo == "PAk":
             # If the nearest neighbors matrix is precomputed:
             if self.nn_distances is not None and self.nn_indices is not None:
-                self.k_max = self.k_max = self.nn_distances.shape[1]-1
+                self.k_max = self.nn_distances.shape[1]-1
                 PAk = PointAdaptive_kNN(k_max=self.k_max, D_thr=self.D_thr, metric=self.metric,
                                                    nn_distances=self.nn_distances, nn_indices=self.nn_indices,
                                                    dim_algo=self.dim_algo, blockAn=self.blockAn,
@@ -361,4 +389,22 @@ class DensityPeakAdvanced(BaseEstimator, DensityMixin):
         return self
 
 
+    def get_params(self, deep=True):
+        # suppose this estimator has parameters "alpha" and "recursive"
+        # Z=1, metric="euclidean", densities=None, err_densities=None, k_hat=None,
+        #              nn_distances=None, nn_indices=None,
+        #              density_algo="PAk", k_max=1000, D_thr=23.92812698, dim=None, dim_algo="twoNN",
+        #               blockAn=True, block_ratio=20, frac=1, n_jobs=None
+        return {"Z": self.Z, "metric": self.metric, "densities": self.densities,
+                "err_densities": self.err_densities, "k_hat": self.k_hat, "nn_distances": self.nn_distances,
+                "nn_indices": self.nn_indices, "density_algo": self.density_algo, "k_max":self.k_max, "D_thr": self.D_thr,
+                "dim": self.dim, "dim_algo": self.dim_algo, "blockAn": self.blockAn, "block_ratio": self.block_ratio,
+                "frac": self.frac, "n_jobs": self.n_jobs}
+        #return {"Z": self.Z, "metric": self.metric, "density_algo": self.density_algo, "k_max":self.k_max,
+        #        "dim": self.dim, "dim_algo": self.dim_algo} 
+    
+    def set_params(self, **parameters):
+        for parameter, value in parameters.items():
+            setattr(self, parameter, value)
+        return self
 
