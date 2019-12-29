@@ -62,7 +62,7 @@ def get_borders( N, k_hat, indices, clu_labels, Nclus, g, densities, err_densiti
     for i in range(0,N):
         for k in range(0,k_hat[i]):
             j = indices[i][k+1]
-            if clu_labels[j]!=clu_labels[i]:
+            if clu_labels[j]!=clu_labels[i] and i not in centers and j not in centers:
                 if (i, clu_labels[i]) not in border_dict.keys():
                     border_dict[(i, clu_labels[i])] = [-1]*Nclus
                     border_dict[(i, clu_labels[i])][clu_labels[j]] = j
