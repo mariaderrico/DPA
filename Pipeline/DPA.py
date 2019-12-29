@@ -91,7 +91,7 @@ def _DensityPeakAdvanced(densities, err_densities, k_hat, distances, indices, Z)
     # Halo points are also dentified as the points whose density is lower than 
     # the density of the lowest saddle point, manely the set of points 
     # whose assignation is not reliable. The clustering labels for halo point is set to -1.
-    Rho_bord, Rho_bord_err, clu_labels, clu_halos, Nclus = _DPA.get_borders(N, k_hat, indices, 
+    Rho_bord, Rho_bord_err, clu_labels, clu_halos, Nclus, centers_m = _DPA.get_borders(N, k_hat, indices, 
                                                                             clu_labels, Nclus, 
                                                                   g, densities, err_densities,
                                                                                    Z, centers)
@@ -102,8 +102,7 @@ def _DensityPeakAdvanced(densities, err_densities, k_hat, distances, indices, Z)
 
     labels = clu_labels
     halos = clu_halos
-
-    return labels, halos, topography, g, centers
+    return labels, halos, topography, g, centers_m
 
    
 class DensityPeakAdvanced(BaseEstimator, DensityMixin):
@@ -338,7 +337,7 @@ class DensityPeakAdvanced(BaseEstimator, DensityMixin):
             
         # If densities, uncertainties and k_hat are provided as input, compute only the
         # matrix of nearest neighbor: 
-        if self.densities and self.err_densities and self.k_hat:
+        if self.densities is not None and self.err_densities is not None and self.k_hat is not None:
             # If the nearest neighbors matrix is precomputed:
             if self.nn_distances is not None and self.nn_indices is not None:
                 self.k_max = max(self.k_hat) 

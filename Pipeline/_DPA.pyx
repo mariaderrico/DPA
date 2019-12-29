@@ -84,7 +84,7 @@ def get_borders( N, k_hat, indices, clu_labels, Nclus, g, densities, err_densiti
                     M_c = max(c,cp)
                     if (m_c, M_c) not in g_saddle.keys() or g[i] > g_saddle[(m_c,M_c)][1]:
                         g_saddle[(m_c,M_c)] = (i, g[i])
-
+                            
     # Fill in the border density matrix
     cdef c_np.ndarray[double, ndim=2] Rho_bord = np.zeros((Nclus,Nclus),dtype=float)
     cdef c_np.ndarray[double, ndim=2] Rho_bord_err = np.zeros((Nclus,Nclus),dtype=float)
@@ -171,7 +171,7 @@ def get_borders( N, k_hat, indices, clu_labels, Nclus, g, densities, err_densiti
                 else:
                     pass
 
-    # Update clustering lables for merged clusters    
+    # Update clustering lables for merged clusters
     for c in M.keys():
         for i in range(N):
             if clu_labels[i]==c:
@@ -179,12 +179,15 @@ def get_borders( N, k_hat, indices, clu_labels, Nclus, g, densities, err_densiti
 
     # Rename the labels of the final clusters
     # Clusters labels go from 0 to Nclus_m-1
+    centers_m = []
     Nclus_m = 0
     for i in set(clu_labels):
         D[i] = Nclus_m
-        Nclus_m +=1 
+        Nclus_m +=1
+        centers_m.append(centers[i]) 
     for i in range(N):
         clu_labels[i] = D[clu_labels[i]]
+
 
     # Update topography
     cdef c_np.ndarray[double, ndim=1] min_rho_bord = np.zeros(Nclus_m)
@@ -214,7 +217,7 @@ def get_borders( N, k_hat, indices, clu_labels, Nclus, g, densities, err_densiti
     cdef c_np.ndarray[long, ndim=1] clu_halos = copy.deepcopy(clu_labels)
     clu_halos = find_halos(min_rho_bord, clu_halos, densities)
 
-    return Rho_bord_m, Rho_bord_err_m, clu_labels, clu_halos, Nclus_m
+    return Rho_bord_m, Rho_bord_err_m, clu_labels, clu_halos, Nclus_m, centers_m
 
 def find_halos(min_rho_bord, clu_halos, densities):
     cdef int i
