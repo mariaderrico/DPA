@@ -53,8 +53,10 @@ def initial_assignment(g, N, indices, centers):
 
 def get_borders( N, k_hat, indices, clu_labels, Nclus, g, densities, err_densities, Z, centers):
     cdef dict border_dict = {}
+    #cdef dict border_kmax = {}
     cdef dict g_saddle = {}
-    cdef int i, k, j, c, cp, m_c, M_c
+    cdef int i, k, j, c, cp, m_c, M_c, id_max
+    cdef float g_max 
 
     # Criterion 1 from Heuristic 2:
     # point i belonging to c is at the border if its closest point j belonging to c′ is 
@@ -66,7 +68,7 @@ def get_borders( N, k_hat, indices, clu_labels, Nclus, g, densities, err_densiti
                 if (i, clu_labels[i]) not in border_dict.keys():
                     border_dict[(i, clu_labels[i])] = [-1]*Nclus
                     border_dict[(i, clu_labels[i])][clu_labels[j]] = j
-                    break
+                    break                    
                 elif border_dict[(i, clu_labels[i])][clu_labels[j]]==-1:
                     border_dict[(i, clu_labels[i])][clu_labels[j]] = j
                     break
@@ -79,11 +81,23 @@ def get_borders( N, k_hat, indices, clu_labels, Nclus, g, densities, err_densiti
         for cp in range(Nclus):
             j = border_dict[(i,c)][cp]
             if j!=-1:
-                if (j,cp) in border_dict.keys() and border_dict[(j,cp)][c] == i:
-                    m_c = min(c,cp)
-                    M_c = max(c,cp)
-                    if (m_c, M_c) not in g_saddle.keys() or g[i] > g_saddle[(m_c,M_c)][1]:
-                        g_saddle[(m_c,M_c)] = (i, g[i])
+                for k in range(0,1000):
+                    z = indices[j][k+1]
+                    if z == i:
+                        m_c = min(c,cp)
+                        M_c = max(c,cp)
+                        if g[i] > g[z]:
+                            g_max = g[i]
+                            id_max = i
+                        else:
+                            g_max = g[z]
+                            id_max = z
+                        if (m_c, M_c) not in g_saddle.keys() or g_max > g_saddle[(m_c,M_c)][1]:
+                            g_saddle[(m_c,M_c)] = (id_max, g_max)
+                    elif clu_labels[i] == clu_labels[z]:
+                        break 
+                    else:
+                        pass
                             
     # Fill in the border density matrix
     cdef c_np.ndarray[double, ndim=2] Rho_bord = np.zeros((Nclus,Nclus),dtype=float)
