@@ -10,10 +10,11 @@ import time
 class example:
     def __init__(self, name):
         self.name = name
-        self.file = 'Pipeline/tests/benchmarks/Fig'+name+'.dat'
-        self.gt_file = 'Pipeline/tests/benchmarks/gt_F'+name+'.txt'
-        self.data=np.loadtxt(self.file,dtype='float') #2D dataset
-        self.gt=np.loadtxt(self.gt_file,dtype='int')
+        if (name in ["1","2","S2","S3","S4"]):
+            self.file = 'Pipeline/tests/benchmarks/Fig'+name+'.dat'
+            self.gt_file = 'Pipeline/tests/benchmarks/gt_F'+name+'.txt'
+            self.data=np.loadtxt(self.file,dtype='float') #2D dataset
+            self.gt=np.loadtxt(self.gt_file,dtype='int')
         self.dpa_Z=None
         self.hdbscan_min_cluster_size=None
         self.hdbscan_min_samples=None
