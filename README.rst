@@ -1,12 +1,12 @@
 Density Peaks Advanced clustering
 =================================
 
-The DPApipeline package implements the Density Peaks Advanced clustering algorithm as introduced in the paper `DPA`_.
+The DPApipeline package implements the Density Peaks Advanced (DPA) clustering algorithm as introduced in the paper `Automatic topography of high-dimensional data sets by non-parametric Density Peak clustering`_.
 The package offers the following features:
 
-* Intrinsic dimensionality estimation by means of the `TWO-NN`_ algorithm
-* Adaptive k-NN Density estimation by means of the `PAk`_ algorithm
-* Advanced version of the `DP`_ clustering algorithm, including an automatic search of cluster centers and assessment of statistical significance of the clusters  
+* Intrinsic dimensionality estimation by means of the `TWO-NN` algorithm, published in the `Estimating the intrinsic dimension of datasets by a minimal neighborhood information`_ paper.
+* Adaptive k-NN Density estimation by means of the `PAk` algorithm, published in the `Computing the free energy without collective variables`_ paper.
+* Advanced version of the `DP` clustering algorithm, published in the `Clustering by fast search and find of density peaks`_ paper, which includes an automatic search of cluster centers and assessment of statistical significance of the clusters  
 
 
 The top-level directory layout::
@@ -61,8 +61,9 @@ The source Python codes are stored inside the ``Pipeline`` folder::
 Documentation files
 -------------------
 
-Full documentation about the Python codes developed and the how-to instructions is crested in the ``doc`` folder using `Sphinx`.
-The ``DPApipeline.pdf`` is in the ``doc/_build/rinioh`` folder.
+Full documentation about the Python codes developed and the how-to instructions is created in the ``docs`` folder using `Sphinx`.
+The documentation in HTML format can be found in ``docs/_build/html/index.html``.
+The ``DPApipeline.pdf`` is in the ``docs/_build/rinioh`` folder.
 
 
 Jupyter notebooks
@@ -146,10 +147,10 @@ A use-case example is provided in the DPA_analysis.ipynb jupyter notebook.
 
 .. References
 
-.. _`DPA`: 
-.. _`PAk`:
-.. _`TWO-NN`:
-.. _`DP`:
+.. _`Automatic topography of high-dimensional data sets by non-parametric Density Peak clustering`: http://arxiv.org/abs/1802.10549v1
+.. _`Computing the free energy without collective variables`: https://pubs.acs.org/doi/full/10.1021/acs.jctc.7b00916 
+.. _`Estimating the intrinsic dimension of datasets by a minimal neighborhood information`: https://export.arxiv.org/pdf/1803.06992 
+.. _`Clustering by fast search and find of density peaks`: http://science.sciencemag.org/content/344/6191/1492.full.pdf
 .. _`github DPApipeline repository`: https://airamd@bitbucket.org/airamd/dpapipeline.git
 .. _`Anaconda`: https://www.anaconda.com/download/#windows
 .. _`git`: https://git-scm.com

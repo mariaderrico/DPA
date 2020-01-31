@@ -19,7 +19,7 @@ VALID_METRIC = ['precomputed', 'euclidean']
 VALID_DIM = ['auto', 'twoNN']
 
 def _PointAdaptive_kNN(distances, indices, k_max=1000, D_thr=23.92812698, dim=None):
-    """Main function implementing the Pointwise Adaptive k-NN density estimator.
+    r"""Main function implementing the Pointwise Adaptive k-NN density estimator.
 
     Parameters
     ----------
@@ -31,19 +31,20 @@ def _PointAdaptive_kNN(distances, indices, k_max=1000, D_thr=23.92812698, dim=No
 
     k_max : int, default=1000
         The maximum number of nearest-neighbors considered by the procedure that returns the
-        largest number of neighbors ``\hat{k}`` for which the condition of constant density 
-        holds, within a given level of confidence. If the number of points in the sample N is 
+        largest number of neighbors ``k_hat`` for which the condition of constant density 
+        holds, within a given level of confidence. If the number of points in the sample `N` is 
         less than the default value, k_max will be set automatically to the value ``N/2``.
     
     D_thr : float, default=23.92812698
         Set the level of confidence. The default value corresponds to a p-value of 
-        ``10**{-6}`` for a ``\chiˆ2`` distribution with one degree of freedom.
+        :math:`10^{-6}` for a :math:`\chiˆ2` distribution with one degree of freedom.
 
     dim : int
         Intrinsic dimensionality of the sample.
 
-    Results
-    -------
+    Attributes
+    ----------
+
     densities : array [n_samples]
         The logarithm of the density at each point.
     
@@ -57,9 +58,6 @@ def _PointAdaptive_kNN(distances, indices, k_max=1000, D_thr=23.92812698, dim=No
     dc : array [n_sample]
         The radius of the optimal neighborhood for each point.
     
-    References
-    ----------
-    # TODO 
 
     """
     # The adaptive k-Nearest Neighbor density estimator
@@ -75,27 +73,27 @@ class PointAdaptive_kNN(BaseEstimator, DensityMixin):
     ----------
     k_max : int, default=1000
         The maximum number of nearest-neighbors considered by the procedure that returns the
-        largest number of neighbors ``\hat{k}`` for which the condition of constant density 
-        holds, within a given level of confidence. If the number of points in the sample N is 
+        largest number of neighbors ``k_hat`` for which the condition of constant density 
+        holds, within a given level of confidence. If the number of points in the sample `N` is 
         less than the default value, k_max will be set automatically to the value ``N/2``.
     
     D_thr : float, default=23.92812698
         Set the level of confidence. The default value corresponds to a p-value of 
-        ``10**{-6}`` for a ``\chiˆ2`` distribution with one degree of freedom.
+        :math:`10^{-6}` for a :math:`\chiˆ2` distribution with one degree of freedom.
 
     metric : string, or callable
         The distance metric to use. 
         If metric is a string, it must be one of the options allowed by 
         scipy.spatial.distance.pdist for its metric parameter, or a metric listed in 
-        pairwise.PAIRWISE_DISTANCE_FUNCTIONS. If metric is "precomputed", X is assumed to
+        :obj:`VALID_METRIC = [precomputed, euclidean]`. If metric is ``precomputed``, X is assumed to
         be a distance matrix. Alternatively, if metric is a callable function, it is 
         called on each pair of instances (rows) and the resulting value recorded. The 
         callable should take two arrays from X as input and return a value indicating 
-        the distance between them. Default is 'euclidean'.
+        the distance between them. Default is ``euclidean``.
 
     dim_algo : string, or callable
-        Method for intrinsic dimensionality calculation. If dim_algo is "auto", dim is assumed to be
-        equal to n_samples. If dim_algo is a string, it must be one of the options allowed by VALID_DIM. 
+        Method for intrinsic dimensionality calculation. If dim_algo is ``auto``, dim is assumed to be
+        equal to n_samples. If dim_algo is a string, it must be one of the options allowed by :obj:`VALID_DIM = [auto, twoNN]`. 
 
     nn_distances  : array [n_samples, k_max+1]
         Distances to the k_max neighbors of each points.
@@ -104,18 +102,18 @@ class PointAdaptive_kNN(BaseEstimator, DensityMixin):
         Indices of the k_max neighbors of each points.
  
     blockAn : bool, default=True
-        This parameter is considered if dim_algo is "twoNN", it is ignored otherwise.
+        This parameter is considered if dim_algo is ``twoNN``, it is ignored otherwise.
         If blockAn is True the algorithm perform a block analysis that allows discriminating the relevant dimensions 
         as a function of the block size. This allows to study the stability of the estimation with respect to
         changes in the neighborhood size, which is crucial for ID estimations when the data lie on a manifold perturbed 
         by a high-dimensional noise. 
 
     block_ratio : int, default=20
-        This parameter is considered if dim_algo is "twoNN", it is ignored otherwise.
-        Set the minimum size of the blocks as n_samples/block_ratio. If blockAn=False, block_ratio is ignored.
+        This parameter is considered if dim_algo is ``twoNN``, it is ignored otherwise.
+        Set the minimum size of the blocks as `n_samples/block_ratio`. If ``blockAn=False``, block_ratio is ignored.
 
     frac : float, default=1
-        This parameter is considered if dim_algo is "twoNN", it is ignored otherwise.
+        This parameter is considered if dim_algo is ``twoNN``, it is ignored otherwise.
         Define the fraction of points in the data set used for ID calculation. By default the full data set is used.   
 
     dim : int
@@ -130,6 +128,7 @@ class PointAdaptive_kNN(BaseEstimator, DensityMixin):
 
     Attributes
     ----------
+
     distances_ : array [n_samples, k_max+1]
         Distances to the k_max neighbors of each points.
 
@@ -174,7 +173,9 @@ class PointAdaptive_kNN(BaseEstimator, DensityMixin):
     
     References
     ----------
-    # TODO
+
+    A. Rodriguez, M. d’Errico, E. Facco and A. Laio, Computing the free energy without collective variables. `J. chemical theory computation` 14, 1206–1215 (2018).
+    
         
     """
     def __init__(self, k_max=1000, D_thr=23.92812698, metric="euclidean", dim_algo="auto",
@@ -207,7 +208,7 @@ class PointAdaptive_kNN(BaseEstimator, DensityMixin):
 
         Parameters
         ----------
-        X : array [n_samples, n_samples] if metric == “precomputed”, or, 
+        X : array [n_samples, n_samples] if metric == ``precomputed``, or, 
             [n_samples, n_features] otherwise
             The input samples.
 

@@ -14,11 +14,14 @@ from sklearn.neighbors import NearestNeighbors
 from math import log, sqrt, exp, lgamma, pi, pow
 from sklearn.linear_model import LinearRegression
 
+VALID_METRIC = ['precomputed', 'euclidean']
+
 def _twoNearestNeighbors(distances, blockAn=True, block_ratio=20, frac=1):
     """Main function for the TWO-NN estimator.
 
     Parameters
     ----------
+    
     distances: array [n_samples, k_max]
         Distances to the k_max neighbors of each points.
  
@@ -29,11 +32,12 @@ def _twoNearestNeighbors(distances, blockAn=True, block_ratio=20, frac=1):
         by a high-dimensional noise. 
 
     block_ratio : int, default=20
-        Set the minimum size of the blocks as n_samples/block_ratio. If blockAn=False, block_ratio is ignored.
+        Set the minimum size of the blocks as `n_samples/block_ratio`. If ``blockAn=False``, block_ratio is ignored.
 
     frac : float, default=1
         Define the fraction of points in the data set used for ID calculation. By default the full data set is used.   
     """
+
     N = len(distances)
     log_nu = []
     d_mle = 0.
@@ -80,11 +84,11 @@ class twoNearestNeighbors(BaseEstimator, DensityMixin):
         The distance metric to use. 
         If metric is a string, it must be one of the options allowed by 
         scipy.spatial.distance.pdist for its metric parameter, or a metric listed in 
-        pairwise.PAIRWISE_DISTANCE_FUNCTIONS. If metric is "precomputed", X is assumed to
+        :obj:`VALID_METRIC = [precomputed, euclidean]`. If metric is ``precomputed``, X is assumed to
         be a distance matrix. Alternatively, if metric is a callable function, it is 
         called on each pair of instances (rows) and the resulting value recorded. The 
         callable should take two arrays from X as input and return a value indicating 
-        the distance between them. Default is 'euclidean'.
+        the distance between them. Default is ``euclidean``.
 
     blockAn : bool, default=True
         If blockAn is True the algorithm perform a block analysis that allows discriminating the relevant dimensions 
@@ -93,7 +97,7 @@ class twoNearestNeighbors(BaseEstimator, DensityMixin):
         by a high-dimensional noise. 
 
     block_ratio : int, default=20
-        Set the minimum size of the blocks as n_samples/block_ratio. If blockAn=False, block_ratio is ignored.
+        Set the minimum size of the blocks as `n_samples/block_ratio`. If ``blockAn=False``, block_ratio is ignored.
 
     frac : float, default=1
         Define the fraction of points in the data set used for ID calculation. By default the full data set is used.   
@@ -107,12 +111,14 @@ class twoNearestNeighbors(BaseEstimator, DensityMixin):
 
     Attributes
     ----------
-    dim_ = int
+    dim_ : int
         The intrinsic dimensionality
+    
  
     References
     ----------
-    # TODO
+    
+    E. Facco, M. d’Errico, A. Rodriguez and A. Laio, Estimating the intrinsic dimension of datasets by a minimal neighborhood information. `Sci. reports` 7, 12140 (2017) 
 
 
     """
@@ -132,7 +138,7 @@ class twoNearestNeighbors(BaseEstimator, DensityMixin):
 
         Parameters
         ----------
-        X : array [n_samples, n_samples] if metric == “precomputed”, or,
+        X : array [n_samples, n_samples] if metric == ``precomputed``, or,
             [n_samples, n_features] otherwise
             The input samples.
 
