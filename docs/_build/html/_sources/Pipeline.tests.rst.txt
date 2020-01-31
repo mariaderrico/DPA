@@ -1,0 +1,70 @@
+Pipeline\.tests package
+=======================
+
+Submodules
+----------
+
+Pipeline\.tests\.test\_DPA module
+---------------------------------
+
+.. automodule:: Pipeline.tests.test_DPA
+    :members:
+    :undoc-members:
+    :show-inheritance:
+
+Pipeline\.tests\.test\_PAk module
+---------------------------------
+
+.. automodule:: Pipeline.tests.test_PAk
+    :members:
+    :undoc-members:
+    :show-inheritance:
+
+Pipeline\.tests\.test\_PUA module
+---------------------------------
+
+.. automodule:: Pipeline.tests.test_PUA
+    :members:
+    :undoc-members:
+    :show-inheritance:
+
+Pipeline\.tests\.test\_common module
+------------------------------------
+
+.. automodule:: Pipeline.tests.test_common
+    :members:
+    :undoc-members:
+    :show-inheritance:
+
+Pipeline\.tests\.test\_template module
+--------------------------------------
+
+.. automodule:: Pipeline.tests.test_template
+    :members:
+    :undoc-members:
+    :show-inheritance:
+
+Pipeline\.tests\.test\_twoNN module
+-----------------------------------
+
+.. automodule:: Pipeline.tests.test_twoNN
+    :members:
+    :undoc-members:
+    :show-inheritance:
+
+Pipeline\.tests\.test\_volumes module
+-------------------------------------
+
+.. automodule:: Pipeline.tests.test_volumes
+    :members:
+    :undoc-members:
+    :show-inheritance:
+
+
+Module contents
+---------------
+
+.. automodule:: Pipeline.tests
+    :members:
+    :undoc-members:
+    :show-inheritance:

@@ -1,0 +1,505 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>Pipeline.DPA &#8212; DPApipeline 0.1 documentation</title>
+    
+    <link rel="stylesheet" href="../../_static/alabaster.css" type="text/css" />
+    <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '../../',
+        VERSION:     '0.1',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true,
+        SOURCELINK_SUFFIX: '.txt'
+      };
+    </script>
+    <script type="text/javascript" src="../../_static/jquery.js"></script>
+    <script type="text/javascript" src="../../_static/underscore.js"></script>
+    <script type="text/javascript" src="../../_static/doctools.js"></script>
+    <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.0/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+    <link rel="index" title="Index" href="../../genindex.html" />
+    <link rel="search" title="Search" href="../../search.html" />
+   
+  <link rel="stylesheet" href="../../_static/custom.css" type="text/css" />
+  
+  
+  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
+
+  </head>
+  <body role="document">
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          
+
+          <div class="body" role="main">
+            
+  <h1>Source code for Pipeline.DPA</h1><div class="highlight"><pre>
+<span></span><span class="c1"># coding=utf-8</span>
+<span class="c1"># Non-parametric Density Peak clustering: </span>
+<span class="c1"># Automatic topography of high-dimensional data sets </span>
+<span class="c1">#</span>
+<span class="c1"># Author: Maria d&#39;Errico &lt;mariaderr@gmail.com&gt;</span>
+<span class="c1">#</span>
+<span class="c1"># Licence: BSD 3 clause</span>
+
+<span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
+<span class="kn">from</span> <span class="nn">sklearn.base</span> <span class="k">import</span> <span class="n">BaseEstimator</span><span class="p">,</span> <span class="n">DensityMixin</span><span class="p">,</span> <span class="n">ClassifierMixin</span><span class="p">,</span> <span class="n">TransformerMixin</span>
+<span class="kn">from</span> <span class="nn">sklearn.utils.validation</span> <span class="k">import</span> <span class="n">check_X_y</span><span class="p">,</span> <span class="n">check_array</span><span class="p">,</span> <span class="n">check_is_fitted</span>
+<span class="kn">from</span> <span class="nn">sklearn.utils.multiclass</span> <span class="k">import</span> <span class="n">unique_labels</span>
+<span class="kn">from</span> <span class="nn">sklearn.metrics</span> <span class="k">import</span> <span class="n">euclidean_distances</span>
+<span class="kn">from</span> <span class="nn">sklearn.neighbors</span> <span class="k">import</span> <span class="n">NearestNeighbors</span>
+<span class="kn">from</span> <span class="nn">sklearn.neighbors</span> <span class="k">import</span> <span class="n">kneighbors_graph</span>
+<span class="kn">from</span> <span class="nn">math</span> <span class="k">import</span> <span class="n">log</span><span class="p">,</span> <span class="n">sqrt</span><span class="p">,</span> <span class="n">exp</span><span class="p">,</span> <span class="n">lgamma</span><span class="p">,</span> <span class="n">pi</span><span class="p">,</span> <span class="nb">pow</span>
+<span class="kn">from</span> <span class="nn">Pipeline</span> <span class="k">import</span> <span class="n">_DPA</span>
+<span class="kn">from</span> <span class="nn">Pipeline.twoNN</span> <span class="k">import</span> <span class="n">twoNearestNeighbors</span>
+<span class="kn">from</span> <span class="nn">Pipeline.PAk</span> <span class="k">import</span> <span class="n">PointAdaptive_kNN</span>
+
+
+<span class="n">VALID_METRIC</span> <span class="o">=</span> <span class="p">[</span><span class="s1">&#39;precomputed&#39;</span><span class="p">,</span> <span class="s1">&#39;euclidean&#39;</span><span class="p">]</span>
+<span class="n">VALID_DIM</span> <span class="o">=</span> <span class="p">[</span><span class="s1">&#39;auto&#39;</span><span class="p">,</span> <span class="s1">&#39;twoNN&#39;</span><span class="p">]</span>
+<span class="n">VALID_DENSITY</span> <span class="o">=</span> <span class="p">[</span><span class="s1">&#39;PAk&#39;</span><span class="p">,</span> <span class="s1">&#39;kNN&#39;</span><span class="p">]</span>
+
+<div class="viewcode-block" id="_DensityPeakAdvanced"><a class="viewcode-back" href="../../code.html#Pipeline.DPA._DensityPeakAdvanced">[docs]</a><span class="k">def</span> <span class="nf">_DensityPeakAdvanced</span><span class="p">(</span><span class="n">densities</span><span class="p">,</span> <span class="n">err_densities</span><span class="p">,</span> <span class="n">k_hat</span><span class="p">,</span> <span class="n">distances</span><span class="p">,</span> <span class="n">indices</span><span class="p">,</span> <span class="n">Z</span><span class="p">):</span>  
+    <span class="sd">&quot;&quot;&quot;Main function implementing the Density Peak Advanced clustering algorithm: </span>
+
+<span class="sd">    * Automatic detection of cluster centers</span>
+<span class="sd">    * Point assignament to clusters in order of decreasing `g`</span>
+<span class="sd">    * Topography reconstruction: search of saddle points and cluster merging</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+
+<span class="sd">    densities : array [n_samples]</span>
+<span class="sd">        The logarithm of the density at each point.</span>
+<span class="sd">    </span>
+<span class="sd">    err_densities : array [n_samples]</span>
+<span class="sd">        The uncertainty in the density estimation, obtained by computing </span>
+<span class="sd">        the inverse of the Fisher information matrix.</span>
+
+<span class="sd">    k_hat : array [n_samples]</span>
+<span class="sd">        The optimal number of neighbors for which the condition of constant density holds.</span>
+
+<span class="sd">    distances: array [n_samples, k_max+1]</span>
+<span class="sd">        Distances to the k_max neighbors of each points. The point itself is included in the array. </span>
+<span class="sd">  </span>
+<span class="sd">    indices : array [n_samples, k_max+1]</span>
+<span class="sd">        Indices of the k_max neighbors of each points. The point itself is included in the array.</span>
+
+<span class="sd">    Z : float, default = 1</span>
+<span class="sd">        The number of standard deviations, which fixes the level of statistical confidence at which </span>
+<span class="sd">        one decides to consider a cluster meaningful.</span>
+
+
+<span class="sd">    Attributes</span>
+<span class="sd">    ----------</span>
+
+<span class="sd">    labels : array [Nclus]</span>
+<span class="sd">        The clustering labels assigned to each point in the data set.</span>
+
+<span class="sd">    halos : array [Nclus]</span>
+<span class="sd">        The clustering labels assigned to each point in the data set. Points identified as halos have </span>
+<span class="sd">        clustering lable equal to ``-1``.</span>
+<span class="sd">    </span>
+<span class="sd">    topography : array [Nclus, Nclus]</span>
+<span class="sd">        Let be Nclus the number of clusters, the topography consists in a Nclus × Nclus symmetric matrix,</span>
+<span class="sd">        in which the diagonal entries are the heights of the peaks and the off-diagonal entries are the</span>
+<span class="sd">        heights of the saddle points.</span>
+
+<span class="sd">    centers : array [Nclus]</span>
+<span class="sd">        The list of points identified as the centers of the Nclus statistically significant clusters.</span>
+
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="c1"># We define as cluster centers the local maxima of g, where g is defined as density-err_density.</span>
+    <span class="n">g</span> <span class="o">=</span> <span class="p">[</span><span class="n">densities</span><span class="p">[</span><span class="n">i</span><span class="p">]</span><span class="o">-</span><span class="n">err_densities</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span><span class="nb">len</span><span class="p">(</span><span class="n">densities</span><span class="p">))]</span>
+
+    <span class="c1"># Automatic detection of cluster centers</span>
+    <span class="c1">#---------------------------------------</span>
+    <span class="n">N</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">densities</span><span class="p">)</span>
+    <span class="n">centers</span> <span class="o">=</span> <span class="n">_DPA</span><span class="o">.</span><span class="n">get_centers</span><span class="p">(</span><span class="n">N</span><span class="p">,</span> <span class="n">indices</span><span class="p">,</span> <span class="n">k_hat</span><span class="p">,</span> <span class="n">g</span><span class="p">)</span>
+    <span class="n">Nclus</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">centers</span><span class="p">)</span>
+
+    <span class="c1"># Assign points to clusters</span>
+    <span class="c1">#--------------------------</span>
+    <span class="c1"># Assign all the points that are not centers to the same cluster as the nearest point with higher g. </span>
+    <span class="c1"># This assignation is performed in order of decreasing g</span>
+    <span class="n">clu_labels</span> <span class="o">=</span> <span class="n">_DPA</span><span class="o">.</span><span class="n">initial_assignment</span><span class="p">(</span><span class="n">g</span><span class="p">,</span> <span class="n">N</span><span class="p">,</span> <span class="n">indices</span><span class="p">,</span> <span class="n">centers</span><span class="p">)</span>
+
+    <span class="c1"># Topography reconstruction</span>
+    <span class="c1">#--------------------------</span>
+    <span class="c1"># Finding saddle points between pair of clusters c and c&#39;.</span>
+    <span class="c1"># Halo points are also dentified as the points whose density is lower than </span>
+    <span class="c1"># the density of the lowest saddle point, manely the set of points </span>
+    <span class="c1"># whose assignation is not reliable. The clustering labels for halo point is set to -1.</span>
+    <span class="n">Rho_bord</span><span class="p">,</span> <span class="n">Rho_bord_err</span><span class="p">,</span> <span class="n">clu_labels</span><span class="p">,</span> <span class="n">clu_halos</span><span class="p">,</span> <span class="n">Nclus</span><span class="p">,</span> <span class="n">centers_m</span> <span class="o">=</span> <span class="n">_DPA</span><span class="o">.</span><span class="n">get_borders</span><span class="p">(</span><span class="n">N</span><span class="p">,</span> <span class="n">k_hat</span><span class="p">,</span> <span class="n">indices</span><span class="p">,</span> 
+                                                                            <span class="n">clu_labels</span><span class="p">,</span> <span class="n">Nclus</span><span class="p">,</span> 
+                                                                  <span class="n">g</span><span class="p">,</span> <span class="n">densities</span><span class="p">,</span> <span class="n">err_densities</span><span class="p">,</span>
+                                                                                   <span class="n">Z</span><span class="p">,</span> <span class="n">centers</span><span class="p">)</span>
+    <span class="n">topography</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="n">Nclus</span><span class="o">-</span><span class="mi">1</span><span class="p">):</span>
+        <span class="k">for</span> <span class="n">j</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">i</span><span class="o">+</span><span class="mi">1</span><span class="p">,</span> <span class="n">Nclus</span><span class="p">):</span>
+            <span class="n">topography</span><span class="o">.</span><span class="n">append</span><span class="p">([</span><span class="n">i</span><span class="p">,</span><span class="n">j</span><span class="p">,</span> <span class="n">Rho_bord</span><span class="p">[</span><span class="n">i</span><span class="p">][</span><span class="n">j</span><span class="p">],</span> <span class="n">Rho_bord_err</span><span class="p">[</span><span class="n">i</span><span class="p">][</span><span class="n">j</span><span class="p">]])</span>
+
+    <span class="n">labels</span> <span class="o">=</span> <span class="n">clu_labels</span>
+    <span class="n">halos</span> <span class="o">=</span> <span class="n">clu_halos</span>
+    <span class="k">return</span> <span class="n">labels</span><span class="p">,</span> <span class="n">halos</span><span class="p">,</span> <span class="n">topography</span><span class="p">,</span> <span class="n">g</span><span class="p">,</span> <span class="n">centers_m</span></div>
+
+   
+<div class="viewcode-block" id="DensityPeakAdvanced"><a class="viewcode-back" href="../../code.html#Pipeline.DPA.DensityPeakAdvanced">[docs]</a><span class="k">class</span> <span class="nc">DensityPeakAdvanced</span><span class="p">(</span><span class="n">BaseEstimator</span><span class="p">,</span> <span class="n">DensityMixin</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Class definition for the non-parametric Density Peak clustering.</span>
+
+<span class="sd">    The default pipeline makes use of the `PAk` density estimator and of the `TWO-NN` intristic dimension estimator.</span>
+<span class="sd">    The densities and the corresponding errors can also be provided as precomputed arrays.</span>
+<span class="sd"> </span>
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+
+<span class="sd">    Z : float, default = 1</span>
+<span class="sd">        The number of standard deviations, which fixes the level of statistical confidence at which </span>
+<span class="sd">        one decides to consider a cluster meaningful.</span>
+
+<span class="sd">    metric : string, or callable</span>
+<span class="sd">        The distance metric to use. </span>
+<span class="sd">        If metric is a string, it must be one of the options allowed by </span>
+<span class="sd">        scipy.spatial.distance.pdist for its metric parameter, or a metric listed in </span>
+<span class="sd">        :obj:`VALID_METRIC = [precomputed, euclidean]`. If metric is ``precomputed``, X is assumed to</span>
+<span class="sd">        be a distance matrix. Alternatively, if metric is a callable function, it is </span>
+<span class="sd">        called on each pair of instances (rows) and the resulting value recorded. The </span>
+<span class="sd">        callable should take two arrays from X as input and return a value indicating </span>
+<span class="sd">        the distance between them. Default is ``euclidean``.</span>
+
+<span class="sd">    densities : array [n_samples], default = None</span>
+<span class="sd">        The logarithm of the density at each point. If provided, the following parameters are ignored:</span>
+<span class="sd">        ``density_algo``, ``k_max``, ``D_thr``.</span>
+
+<span class="sd">    err_densities : array [n_samples], default = None</span>
+<span class="sd">        The uncertainty in the density estimation, obtained by computing </span>
+<span class="sd">        the inverse of the Fisher information matrix.</span>
+
+<span class="sd">    k_hat : array [n_samples], default = None</span>
+<span class="sd">        The optimal number of neighbors for which the condition of constant density holds.</span>
+
+<span class="sd">    nn_distances  : array [n_samples, k_max+1]</span>
+<span class="sd">        Distances to the k_max neighbors of each points.</span>
+
+<span class="sd">    nn_indices : array [n_samples, k_max+1]</span>
+<span class="sd">        Indices of the k_max neighbors of each points.</span>
+
+<span class="sd">    affinity : string or callable, default &#39;precomputed&#39;</span>
+<span class="sd">        How to construct the affinity matrix.</span>
+<span class="sd">         - ``nearest_neighbors`` : construct the affinity matrix by computing a</span>
+<span class="sd">           graph of nearest neighbors.</span>
+<span class="sd">         - ``rbf`` : construct the affinity matrix using a radial basis function</span>
+<span class="sd">           (RBF) kernel.</span>
+<span class="sd">         - ``precomputed`` : interpret ``X`` as a precomputed affinity matrix.</span>
+<span class="sd">         - ``precomputed_nearest_neighbors`` : interpret ``X`` as a sparse graph</span>
+<span class="sd">           of precomputed nearest neighbors, and constructs the affinity matrix</span>
+<span class="sd">           by selecting the ``n_neighbors`` nearest neighbors.</span>
+<span class="sd">         - one of the kernels supported by</span>
+<span class="sd">           :func:`~sklearn.metrics.pairwise_kernels`.</span>
+
+<span class="sd">    density_algo : string, default = &quot;PAk&quot;</span>
+<span class="sd">        Define the algorithm to use as density estimator. It mast be one of the options allowed by </span>
+<span class="sd">        :obj:`VALID_DENSITY = [PAk, kNN]`. </span>
+<span class="sd">        </span>
+<span class="sd">    k_max : int, default=1000</span>
+<span class="sd">        This parameter is considered if density_algo is ``PAk`` or ``kNN``, it is ignored otherwise.</span>
+<span class="sd">        k_max set the maximum number of nearest-neighbors considered by the density estimator.</span>
+<span class="sd">        If ``density_algo=PAk``, k_max is used by the algorithm in the search for the </span>
+<span class="sd">        largest number of neighbors ``k_hat`` for which the condition of constant density </span>
+<span class="sd">        holds, within a given level of confidence. </span>
+<span class="sd">        If ``density_algo=kNN``, k_max set the number of neighbors to be used by the standard</span>
+<span class="sd">        k-Nearest Neighbor algorithm.</span>
+<span class="sd">        If the number of points in the sample N is </span>
+<span class="sd">        less than the default value, k_max will be set automatically to the value ``N/2``.</span>
+
+<span class="sd">    D_thr : float, default=23.92812698</span>
+<span class="sd">        This parameter is considered if density_algo is ``PAk``, it is ignored otherwise.</span>
+<span class="sd">        Set the level of confidence in the PAk density estimator. The default value corresponds to a p-value of </span>
+<span class="sd">        :math:`10^{-6}` for a :math:`\chiˆ2` distribution with one degree of freedom.</span>
+
+<span class="sd">    dim : int, default = None</span>
+<span class="sd">        Intrinsic dimensionality of the sample. If dim is provided, the following parameters are ignored:</span>
+<span class="sd">        ``dim_algo``, ``blockAn``, ``block_ratio``, ``frac``.</span>
+
+<span class="sd">    dim_algo : string, or callable, default=&quot;twoNN&quot;</span>
+<span class="sd">        Method for intrinsic dimensionality calculation. If dim_algo is ``auto``, dim is assumed to be</span>
+<span class="sd">        equal to n_samples. If dim_algo is a string, it must be one of the options allowed by :obj:`VALID_DIM = [auto, twoNN]`. </span>
+
+<span class="sd">    blockAn : bool, default=True</span>
+<span class="sd">        This parameter is considered if dim_algo is ``twoNN``, it is ignored otherwise.</span>
+<span class="sd">        If blockAn is True the algorithm perform a block analysis that allows discriminating the relevant dimensions </span>
+<span class="sd">        as a function of the block size. This allows to study the stability of the estimation with respect to</span>
+<span class="sd">        changes in the neighborhood size, which is crucial for ID estimations when the data lie on a </span>
+<span class="sd">        manifold perturbed by a high-dimensional noise. </span>
+
+<span class="sd">    block_ratio : int, default=5</span>
+<span class="sd">        This parameter is considered if dim_algo is ``twoNN``, it is ignored otherwise.</span>
+<span class="sd">        Set the minimum size of the blocks as `n_samples/block_ratio`. If ``blockAn=False``, ``block_ratio`` is ignored.</span>
+
+<span class="sd">    frac : float, default=1</span>
+<span class="sd">        This parameter is considered if dim_algo is ``twoNN``, it is ignored otherwise.</span>
+<span class="sd">        Define the fraction of points in the data set used for ID calculation. By default the full data set is used.   </span>
+
+<span class="sd">    n_jobs : int or None, optional (default=None)</span>
+<span class="sd">        The number of jobs to use for the computation. This works by computing</span>
+<span class="sd">        each of the n_init runs in parallel.</span>
+<span class="sd">        ``None`` means 1 unless in a :obj:`joblib.parallel_backend` context.</span>
+<span class="sd">        ``-1`` means using all processors. See :term:`Glossary &lt;n_jobs&gt;`</span>
+<span class="sd">        for more details.</span>
+
+<span class="sd">    Attributes</span>
+<span class="sd">    ----------</span>
+<span class="sd">    labels_ : array [Nclus]</span>
+<span class="sd">        The clustering labels assigned to each point in the data set.</span>
+
+<span class="sd">    halos_ : array [Nclus]</span>
+<span class="sd">        The clustering labels assigned to each point in the data set. Points identified as halos have </span>
+<span class="sd">        label equal to zero.</span>
+
+<span class="sd">    topography_ : array [Nclus, Nclus]</span>
+<span class="sd">        Let be Nclus the number of clusters, the topography consists in a Nclus × Nclus symmetric matrix, </span>
+<span class="sd">        in which the diagonal entries are the heights of the peaks and the off-diagonal entries are the </span>
+<span class="sd">        heights of the saddle points. </span>
+
+<span class="sd">    distances_ : array [n_samples, k_max+1]</span>
+<span class="sd">        Distances to the k_max neighbors of each points. The point itself is included in the array.</span>
+
+<span class="sd">    indices_ : array [n_samples, k_max+1]</span>
+<span class="sd">        Indices of the k_max neighbors of each points. The point itself is included in the array.</span>
+<span class="sd"> </span>
+<span class="sd">    k_hat_ : array [n_samples], default = None</span>
+<span class="sd">        The optimal number of neighbors for which the condition of constant density holds.</span>
+
+<span class="sd">    centers_ :array [Nclus]</span>
+<span class="sd">        The clustering labels assigned to each point in the data set.</span>
+
+<span class="sd">    Example</span>
+<span class="sd">    -------</span>
+
+
+<span class="sd">    References</span>
+<span class="sd">    ----------</span>
+<span class="sd">    </span>
+<span class="sd">    M. d’Errico, E. Facco, A. Laio and A. Rodriguez, Automatic topography of high-dimensional data sets by non-parametric Density Peak clustering (2018) https://arxiv.org/abs/1802.10549</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">Z</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">metric</span><span class="o">=</span><span class="s2">&quot;euclidean&quot;</span><span class="p">,</span> <span class="n">densities</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">err_densities</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">k_hat</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+                      <span class="n">nn_distances</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">nn_indices</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">affinity</span><span class="o">=</span><span class="s1">&#39;precomputed&#39;</span><span class="p">,</span>
+                      <span class="n">density_algo</span><span class="o">=</span><span class="s2">&quot;PAk&quot;</span><span class="p">,</span> <span class="n">k_max</span><span class="o">=</span><span class="mi">1000</span><span class="p">,</span> <span class="n">D_thr</span><span class="o">=</span><span class="mf">23.92812698</span><span class="p">,</span> <span class="n">dim</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">dim_algo</span><span class="o">=</span><span class="s2">&quot;twoNN&quot;</span><span class="p">,</span> 
+                       <span class="n">blockAn</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">block_ratio</span><span class="o">=</span><span class="mi">5</span><span class="p">,</span> <span class="n">frac</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">n_jobs</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">Z</span> <span class="o">=</span> <span class="n">Z</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">metric</span> <span class="o">=</span> <span class="n">metric</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">densities</span> <span class="o">=</span> <span class="n">densities</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">err_densities</span> <span class="o">=</span> <span class="n">err_densities</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">k_hat</span> <span class="o">=</span> <span class="n">k_hat</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">nn_distances</span> <span class="o">=</span> <span class="n">nn_distances</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">nn_indices</span> <span class="o">=</span> <span class="n">nn_indices</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">affinity</span> <span class="o">=</span> <span class="n">affinity</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">density_algo</span> <span class="o">=</span> <span class="n">density_algo</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">k_max</span> <span class="o">=</span> <span class="n">k_max</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">D_thr</span> <span class="o">=</span> <span class="n">D_thr</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">dim</span> <span class="o">=</span> <span class="n">dim</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">dim_algo</span> <span class="o">=</span> <span class="n">dim_algo</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">blockAn</span> <span class="o">=</span> <span class="n">blockAn</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">block_ratio</span> <span class="o">=</span> <span class="n">block_ratio</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">frac</span> <span class="o">=</span> <span class="n">frac</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">n_jobs</span> <span class="o">=</span> <span class="n">n_jobs</span>
+
+        <span class="k">if</span> <span class="n">metric</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">VALID_METRIC</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;invalid metric: &#39;</span><span class="si">{0}</span><span class="s2">&#39;&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">metric</span><span class="p">))</span>
+
+        <span class="k">if</span> <span class="n">dim_algo</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">VALID_DIM</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;invalid dim_algo: &#39;</span><span class="si">{0}</span><span class="s2">&#39;&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">dim_algo</span><span class="p">))</span>
+
+        <span class="k">if</span> <span class="n">density_algo</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">VALID_DENSITY</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;invalid dim_algo: &#39;</span><span class="si">{0}</span><span class="s2">&#39;&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">density_algo</span><span class="p">))</span>
+
+        <span class="c1">#if not (self.densities and self.err_densities  and self.k_hat):</span>
+        <span class="c1">#    # TODO: decide whether to raise a worning instead and automatically run PAk. </span>
+        <span class="c1">#    raise ValueError(&quot;DPA requires the error estimation and optimal neighborhood along \</span>
+        <span class="c1">#                      with the densities. If not available, use the default PAk estimator&quot;) </span>
+
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">dim_algo</span> <span class="o">==</span> <span class="s2">&quot;twoNN&quot;</span> <span class="ow">and</span> <span class="bp">self</span><span class="o">.</span><span class="n">frac</span> <span class="o">&gt;</span> <span class="mi">1</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;frac should be between 0 and 1.&quot;</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">nn_distances</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="bp">self</span><span class="o">.</span><span class="n">nn_indices</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>        
+            <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">nn_distances</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">!=</span> <span class="bp">self</span><span class="o">.</span><span class="n">nn_indices</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">1</span><span class="p">]:</span>
+                <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;check nn_distances and nn_indices. Mismatch in array dimension.&quot;</span><span class="p">)</span>
+ 
+<div class="viewcode-block" id="DensityPeakAdvanced.fit"><a class="viewcode-back" href="../../code.html#Pipeline.DPA.DensityPeakAdvanced.fit">[docs]</a>    <span class="k">def</span> <span class="nf">fit</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">X</span><span class="p">,</span> <span class="n">y</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Fit the DPA clustering on the data.</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        X : array [n_samples, n_samples] if metric == “precomputed”, or, </span>
+<span class="sd">            [n_samples, n_features] otherwise</span>
+<span class="sd">            The input samples. Similarities / affinities between</span>
+<span class="sd">            instances if ``affinity=&#39;precomputed&#39;``.</span>
+
+<span class="sd">        y : Ignored</span>
+<span class="sd">            Not used, present here for API consistency by convention.</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        self : object</span>
+<span class="sd">            Returns self.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="c1"># Input validation</span>
+        <span class="c1">#X = check_array(X, order=&#39;C&#39;, accept_sparse=True)</span>
+        <span class="n">X</span> <span class="o">=</span> <span class="n">check_array</span><span class="p">(</span><span class="n">X</span><span class="p">,</span> <span class="n">accept_sparse</span><span class="o">=</span><span class="p">[</span><span class="s1">&#39;csr&#39;</span><span class="p">,</span> <span class="s1">&#39;csc&#39;</span><span class="p">,</span> <span class="s1">&#39;coo&#39;</span><span class="p">],</span>
+                        <span class="n">dtype</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">float64</span><span class="p">,</span> <span class="n">ensure_min_samples</span><span class="o">=</span><span class="mi">2</span><span class="p">)</span>
+
+        <span class="n">allow_squared</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">affinity</span> <span class="ow">in</span> <span class="p">[</span><span class="s2">&quot;precomputed&quot;</span><span class="p">,</span>
+                                          <span class="s2">&quot;precomputed_nearest_neighbors&quot;</span><span class="p">]</span>
+        <span class="k">if</span> <span class="n">X</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">==</span> <span class="n">X</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="ow">and</span> <span class="ow">not</span> <span class="n">allow_squared</span><span class="p">:</span>
+            <span class="n">warnings</span><span class="o">.</span><span class="n">warn</span><span class="p">(</span><span class="s2">&quot;The DPA clustering API has changed. ``fit``&quot;</span>
+                          <span class="s2">&quot;now constructs an affinity matrix from data. To use&quot;</span>
+                          <span class="s2">&quot; a custom affinity matrix, &quot;</span>
+                          <span class="s2">&quot;set ``affinity=precomputed``.&quot;</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">affinity</span> <span class="o">==</span> <span class="s1">&#39;precomputed&#39;</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">affinity_matrix_</span> <span class="o">=</span> <span class="n">X</span>
+
+        <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">dim</span><span class="p">:</span>
+            <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">dim_algo</span> <span class="o">==</span> <span class="s2">&quot;auto&quot;</span><span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">dim</span> <span class="o">=</span> <span class="n">X</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span>
+            <span class="k">elif</span> <span class="bp">self</span><span class="o">.</span><span class="n">dim_algo</span> <span class="o">==</span> <span class="s2">&quot;twoNN&quot;</span><span class="p">:</span>
+                <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">block_ratio</span> <span class="o">&gt;=</span> <span class="n">X</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]:</span>
+                    <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;block_ratio is larger than the sample size, the minimum size for </span><span class="se">\</span>
+<span class="s2">                                      block analysis would be zero. Please set a value lower than &quot;</span><span class="o">+</span><span class="nb">str</span><span class="p">(</span><span class="n">X</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]))</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">dim</span> <span class="o">=</span> <span class="n">twoNearestNeighbors</span><span class="p">(</span><span class="n">blockAn</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">blockAn</span><span class="p">,</span> <span class="n">block_ratio</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">block_ratio</span><span class="p">,</span> 
+                                               <span class="n">frac</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">frac</span><span class="p">,</span> <span class="n">n_jobs</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">n_jobs</span><span class="p">)</span><span class="o">.</span><span class="n">fit</span><span class="p">(</span><span class="n">X</span><span class="p">)</span><span class="o">.</span><span class="n">dim_</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="k">pass</span>
+
+    
+            
+        <span class="c1"># If densities, uncertainties and k_hat are provided as input, compute only the</span>
+        <span class="c1"># matrix of nearest neighbor: </span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">densities</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="bp">self</span><span class="o">.</span><span class="n">err_densities</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="bp">self</span><span class="o">.</span><span class="n">k_hat</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="c1"># If the nearest neighbors matrix is precomputed:</span>
+            <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">nn_distances</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="bp">self</span><span class="o">.</span><span class="n">nn_indices</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">k_max</span> <span class="o">=</span> <span class="nb">max</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">k_hat</span><span class="p">)</span> 
+                <span class="bp">self</span><span class="o">.</span><span class="n">distances_</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">nn_distances</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">indices_</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">nn_indices</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">k_max</span> <span class="o">=</span> <span class="nb">max</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">k_hat</span><span class="p">)</span>
+                <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">metric</span> <span class="o">==</span> <span class="s2">&quot;precomputed&quot;</span><span class="p">:</span>
+                    <span class="n">nbrs</span> <span class="o">=</span> <span class="n">NearestNeighbors</span><span class="p">(</span><span class="n">n_neighbors</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">k_max</span><span class="o">+</span><span class="mi">1</span><span class="p">,</span> <span class="c1"># The point i is counted in its neighborhood </span>
+                                                  <span class="n">algorithm</span><span class="o">=</span><span class="s2">&quot;brute&quot;</span><span class="p">,</span> 
+                                                <span class="n">metric</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">metric</span><span class="p">,</span>
+                                                <span class="n">n_jobs</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">n_jobs</span><span class="p">)</span><span class="o">.</span><span class="n">fit</span><span class="p">(</span><span class="n">X</span><span class="p">)</span>
+                <span class="k">else</span><span class="p">:</span>
+                    <span class="n">nbrs</span> <span class="o">=</span> <span class="n">NearestNeighbors</span><span class="p">(</span><span class="n">n_neighbors</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">k_max</span><span class="o">+</span><span class="mi">1</span><span class="p">,</span> <span class="c1"># The point i is counted in its neighborhood </span>
+                                                 <span class="n">algorithm</span><span class="o">=</span><span class="s2">&quot;auto&quot;</span><span class="p">,</span> 
+                                                <span class="n">metric</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">metric</span><span class="p">,</span> 
+                                                <span class="n">n_jobs</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">n_jobs</span><span class="p">)</span><span class="o">.</span><span class="n">fit</span><span class="p">(</span><span class="n">X</span><span class="p">)</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">distances_</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">indices_</span> <span class="o">=</span> <span class="n">nbrs</span><span class="o">.</span><span class="n">kneighbors</span><span class="p">(</span><span class="n">X</span><span class="p">)</span> 
+        <span class="k">elif</span> <span class="bp">self</span><span class="o">.</span><span class="n">density_algo</span> <span class="o">==</span> <span class="s2">&quot;PAk&quot;</span><span class="p">:</span>
+            <span class="c1"># If the nearest neighbors matrix is precomputed:</span>
+            <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">nn_distances</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="bp">self</span><span class="o">.</span><span class="n">nn_indices</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">k_max</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">nn_distances</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span><span class="o">-</span><span class="mi">1</span>
+                <span class="n">PAk</span> <span class="o">=</span> <span class="n">PointAdaptive_kNN</span><span class="p">(</span><span class="n">k_max</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">k_max</span><span class="p">,</span> <span class="n">D_thr</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">D_thr</span><span class="p">,</span> <span class="n">metric</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">metric</span><span class="p">,</span>
+                                                   <span class="n">nn_distances</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">nn_distances</span><span class="p">,</span> <span class="n">nn_indices</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">nn_indices</span><span class="p">,</span>
+                                                   <span class="n">dim_algo</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">dim_algo</span><span class="p">,</span> <span class="n">blockAn</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">blockAn</span><span class="p">,</span>
+                                                   <span class="n">block_ratio</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">block_ratio</span><span class="p">,</span>
+                                                   <span class="n">frac</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">frac</span><span class="p">,</span> <span class="n">dim</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">dim</span><span class="p">,</span> <span class="n">n_jobs</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">n_jobs</span><span class="p">)</span><span class="o">.</span><span class="n">fit</span><span class="p">(</span><span class="n">X</span><span class="p">)</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">PAk</span> <span class="o">=</span> <span class="n">PointAdaptive_kNN</span><span class="p">(</span><span class="n">k_max</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">k_max</span><span class="p">,</span> <span class="n">D_thr</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">D_thr</span><span class="p">,</span> <span class="n">metric</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">metric</span><span class="p">,</span> 
+                                                   <span class="n">dim_algo</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">dim_algo</span><span class="p">,</span> <span class="n">blockAn</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">blockAn</span><span class="p">,</span> 
+                                                   <span class="n">block_ratio</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">block_ratio</span><span class="p">,</span>
+                                                   <span class="n">frac</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">frac</span><span class="p">,</span> <span class="n">dim</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">dim</span><span class="p">,</span> <span class="n">n_jobs</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">n_jobs</span><span class="p">)</span><span class="o">.</span><span class="n">fit</span><span class="p">(</span><span class="n">X</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">distances_</span> <span class="o">=</span> <span class="n">PAk</span><span class="o">.</span><span class="n">distances_</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">indices_</span> <span class="o">=</span> <span class="n">PAk</span><span class="o">.</span><span class="n">indices_</span> 
+            <span class="bp">self</span><span class="o">.</span><span class="n">densities</span> <span class="o">=</span> <span class="n">PAk</span><span class="o">.</span><span class="n">densities_</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">err_densities</span> <span class="o">=</span> <span class="n">PAk</span><span class="o">.</span><span class="n">err_densities_</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">k_hat</span> <span class="o">=</span> <span class="n">PAk</span><span class="o">.</span><span class="n">k_hat_</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">k_max</span> <span class="o">=</span> <span class="nb">max</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">k_hat</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="c1"># TODO: implement option for kNN</span>
+            <span class="k">pass</span>
+        
+        <span class="bp">self</span><span class="o">.</span><span class="n">labels_</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">halos_</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">topography_</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">g_</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">centers_</span> <span class="o">=</span> <span class="n">_DensityPeakAdvanced</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">densities</span><span class="p">,</span> 
+                                                              <span class="bp">self</span><span class="o">.</span><span class="n">err_densities</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">k_hat</span><span class="p">,</span>
+                                                              <span class="bp">self</span><span class="o">.</span><span class="n">distances_</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">indices_</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">Z</span><span class="p">)</span>
+                                                              
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">is_fitted_</span> <span class="o">=</span> <span class="kc">True</span>
+        <span class="k">return</span> <span class="bp">self</span></div>
+
+
+<div class="viewcode-block" id="DensityPeakAdvanced.get_params"><a class="viewcode-back" href="../../code.html#Pipeline.DPA.DensityPeakAdvanced.get_params">[docs]</a>    <span class="k">def</span> <span class="nf">get_params</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">deep</span><span class="o">=</span><span class="kc">True</span><span class="p">):</span>
+        <span class="c1"># suppose this estimator has parameters &quot;alpha&quot; and &quot;recursive&quot;</span>
+        <span class="c1"># Z=1, metric=&quot;euclidean&quot;, densities=None, err_densities=None, k_hat=None,</span>
+        <span class="c1">#              nn_distances=None, nn_indices=None,</span>
+        <span class="c1">#              density_algo=&quot;PAk&quot;, k_max=1000, D_thr=23.92812698, dim=None, dim_algo=&quot;twoNN&quot;,</span>
+        <span class="c1">#               blockAn=True, block_ratio=20, frac=1, n_jobs=None</span>
+        <span class="k">return</span> <span class="p">{</span><span class="s2">&quot;Z&quot;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">Z</span><span class="p">,</span> <span class="s2">&quot;metric&quot;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">metric</span><span class="p">,</span> <span class="s2">&quot;densities&quot;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">densities</span><span class="p">,</span>
+                <span class="s2">&quot;err_densities&quot;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">err_densities</span><span class="p">,</span> <span class="s2">&quot;k_hat&quot;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">k_hat</span><span class="p">,</span> <span class="s2">&quot;nn_distances&quot;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">nn_distances</span><span class="p">,</span>
+                <span class="s2">&quot;nn_indices&quot;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">nn_indices</span><span class="p">,</span> <span class="s2">&quot;density_algo&quot;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">density_algo</span><span class="p">,</span> <span class="s2">&quot;k_max&quot;</span><span class="p">:</span><span class="bp">self</span><span class="o">.</span><span class="n">k_max</span><span class="p">,</span> <span class="s2">&quot;D_thr&quot;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">D_thr</span><span class="p">,</span>
+                <span class="s2">&quot;dim&quot;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">dim</span><span class="p">,</span> <span class="s2">&quot;dim_algo&quot;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">dim_algo</span><span class="p">,</span> <span class="s2">&quot;blockAn&quot;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">blockAn</span><span class="p">,</span> <span class="s2">&quot;block_ratio&quot;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">block_ratio</span><span class="p">,</span>
+                <span class="s2">&quot;frac&quot;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">frac</span><span class="p">,</span> <span class="s2">&quot;n_jobs&quot;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">n_jobs</span><span class="p">}</span></div>
+        <span class="c1">#return {&quot;Z&quot;: self.Z, &quot;metric&quot;: self.metric, &quot;density_algo&quot;: self.density_algo, &quot;k_max&quot;:self.k_max,</span>
+        <span class="c1">#        &quot;dim&quot;: self.dim, &quot;dim_algo&quot;: self.dim_algo} </span>
+    
+<div class="viewcode-block" id="DensityPeakAdvanced.set_params"><a class="viewcode-back" href="../../code.html#Pipeline.DPA.DensityPeakAdvanced.set_params">[docs]</a>    <span class="k">def</span> <span class="nf">set_params</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">**</span><span class="n">parameters</span><span class="p">):</span>
+        <span class="k">for</span> <span class="n">parameter</span><span class="p">,</span> <span class="n">value</span> <span class="ow">in</span> <span class="n">parameters</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+            <span class="nb">setattr</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">parameter</span><span class="p">,</span> <span class="n">value</span><span class="p">)</span>
+        <span class="k">return</span> <span class="bp">self</span></div></div>
+
+</pre></div>
+
+          </div>
+          
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper"><div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="../../index.html">Documentation overview</a><ul>
+  <li><a href="../index.html">Module code</a><ul>
+  </ul></li>
+  </ul></li>
+</ul>
+</div>
+<div id="searchbox" style="display: none" role="search">
+  <h3>Quick search</h3>
+    <form class="search" action="../../search.html" method="get">
+      <div><input type="text" name="q" /></div>
+      <div><input type="submit" value="Go" /></div>
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &copy;2019, Maria d'Errico.
+      
+      |
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 1.5.6</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.12</a>
+      
+    </div>
+
+    
+
+    
+  </body>
+</html>

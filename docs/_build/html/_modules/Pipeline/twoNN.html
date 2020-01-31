@@ -1,0 +1,274 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>Pipeline.twoNN &#8212; DPApipeline 0.1 documentation</title>
+    
+    <link rel="stylesheet" href="../../_static/alabaster.css" type="text/css" />
+    <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '../../',
+        VERSION:     '0.1',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true,
+        SOURCELINK_SUFFIX: '.txt'
+      };
+    </script>
+    <script type="text/javascript" src="../../_static/jquery.js"></script>
+    <script type="text/javascript" src="../../_static/underscore.js"></script>
+    <script type="text/javascript" src="../../_static/doctools.js"></script>
+    <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.0/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+    <link rel="index" title="Index" href="../../genindex.html" />
+    <link rel="search" title="Search" href="../../search.html" />
+   
+  <link rel="stylesheet" href="../../_static/custom.css" type="text/css" />
+  
+  
+  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
+
+  </head>
+  <body role="document">
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          
+
+          <div class="body" role="main">
+            
+  <h1>Source code for Pipeline.twoNN</h1><div class="highlight"><pre>
+<span></span><span class="c1"># TWO-NN: Intrinsic dimension estimator by a minimal neighborhood information.</span>
+<span class="c1">#</span>
+<span class="c1"># Author: Maria d&#39;Errico &lt;mariaderr@gmail.com&gt;</span>
+<span class="c1">#</span>
+<span class="c1"># Licence: BSD 3 clause</span>
+
+<span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
+<span class="kn">import</span> <span class="nn">heapq</span>
+<span class="kn">from</span> <span class="nn">sklearn.base</span> <span class="k">import</span> <span class="n">BaseEstimator</span><span class="p">,</span> <span class="n">ClassifierMixin</span><span class="p">,</span> <span class="n">TransformerMixin</span><span class="p">,</span> <span class="n">DensityMixin</span>
+<span class="kn">from</span> <span class="nn">sklearn.utils.validation</span> <span class="k">import</span> <span class="n">check_X_y</span><span class="p">,</span> <span class="n">check_array</span><span class="p">,</span> <span class="n">check_is_fitted</span>
+<span class="kn">from</span> <span class="nn">sklearn.utils.multiclass</span> <span class="k">import</span> <span class="n">unique_labels</span>
+<span class="kn">from</span> <span class="nn">sklearn.metrics</span> <span class="k">import</span> <span class="n">euclidean_distances</span>
+<span class="kn">from</span> <span class="nn">sklearn.neighbors</span> <span class="k">import</span> <span class="n">NearestNeighbors</span>
+<span class="kn">from</span> <span class="nn">math</span> <span class="k">import</span> <span class="n">log</span><span class="p">,</span> <span class="n">sqrt</span><span class="p">,</span> <span class="n">exp</span><span class="p">,</span> <span class="n">lgamma</span><span class="p">,</span> <span class="n">pi</span><span class="p">,</span> <span class="nb">pow</span>
+<span class="kn">from</span> <span class="nn">sklearn.linear_model</span> <span class="k">import</span> <span class="n">LinearRegression</span>
+
+<span class="n">VALID_METRIC</span> <span class="o">=</span> <span class="p">[</span><span class="s1">&#39;precomputed&#39;</span><span class="p">,</span> <span class="s1">&#39;euclidean&#39;</span><span class="p">]</span>
+
+<div class="viewcode-block" id="_twoNearestNeighbors"><a class="viewcode-back" href="../../code.html#Pipeline.twoNN._twoNearestNeighbors">[docs]</a><span class="k">def</span> <span class="nf">_twoNearestNeighbors</span><span class="p">(</span><span class="n">distances</span><span class="p">,</span> <span class="n">blockAn</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">block_ratio</span><span class="o">=</span><span class="mi">20</span><span class="p">,</span> <span class="n">frac</span><span class="o">=</span><span class="mi">1</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Main function for the TWO-NN estimator.</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    </span>
+<span class="sd">    distances: array [n_samples, k_max]</span>
+<span class="sd">        Distances to the k_max neighbors of each points.</span>
+<span class="sd"> </span>
+<span class="sd">    blockAn : bool, default=True</span>
+<span class="sd">        If blockAn is True the algorithm perform a block analysis that allows discriminating the relevant dimensions </span>
+<span class="sd">        as a function of the block size. This allows to study the stability of the estimation with respect to</span>
+<span class="sd">        changes in the neighborhood size, which is crucial for ID estimations when the data lie on a manifold perturbed </span>
+<span class="sd">        by a high-dimensional noise. </span>
+
+<span class="sd">    block_ratio : int, default=20</span>
+<span class="sd">        Set the minimum size of the blocks as `n_samples/block_ratio`. If ``blockAn=False``, block_ratio is ignored.</span>
+
+<span class="sd">    frac : float, default=1</span>
+<span class="sd">        Define the fraction of points in the data set used for ID calculation. By default the full data set is used.   </span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="n">N</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">distances</span><span class="p">)</span>
+    <span class="n">log_nu</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="n">d_mle</span> <span class="o">=</span> <span class="mf">0.</span>
+    <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="n">N</span><span class="p">):</span>
+        <span class="c1"># TODO: handle duplicate points, i.e. distances[i][1] equals to zero</span>
+        <span class="n">log_nu_i</span> <span class="o">=</span> <span class="n">log</span><span class="p">(</span><span class="n">distances</span><span class="p">[</span><span class="n">i</span><span class="p">][</span><span class="mi">2</span><span class="p">])</span><span class="o">-</span><span class="n">log</span><span class="p">(</span><span class="n">distances</span><span class="p">[</span><span class="n">i</span><span class="p">][</span><span class="mi">1</span><span class="p">])</span>
+        <span class="n">log_nu</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">log_nu_i</span><span class="p">)</span> 
+        <span class="n">d_mle</span> <span class="o">=</span> <span class="n">d_mle</span> <span class="o">+</span> <span class="n">log_nu_i</span>
+    <span class="c1"># Intrinsic dimension estimated with MLE variant of TWO-NN</span>
+    <span class="n">id_mle</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="nb">round</span><span class="p">(</span><span class="n">N</span><span class="o">/</span><span class="n">d_mle</span><span class="p">))</span>
+
+    <span class="c1"># Perform linear fit -log[1-F(nu)]=d*log(nu), where F(nu)=i/N, with intercept=0</span>
+    <span class="n">x</span> <span class="o">=</span> <span class="n">log_nu</span>
+    <span class="k">if</span> <span class="n">frac</span><span class="o">&lt;</span><span class="mi">1</span><span class="p">:</span>
+        <span class="n">x</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="n">heapq</span><span class="o">.</span><span class="n">heapify</span><span class="p">(</span><span class="n">log_nu</span><span class="p">)</span>
+        <span class="k">for</span> <span class="n">_</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">int</span><span class="p">(</span><span class="nb">round</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">log_nu</span><span class="p">)</span><span class="o">*</span><span class="n">frac</span><span class="p">))):</span>
+            <span class="n">x</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">heapq</span><span class="o">.</span><span class="n">heappop</span><span class="p">(</span><span class="n">log_nu</span><span class="p">))</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">x</span> <span class="o">=</span> <span class="nb">sorted</span><span class="p">(</span><span class="n">log_nu</span><span class="p">)</span>
+
+    <span class="c1"># TODO: compare with the available benchmarks using (i+1)/N instead</span>
+    <span class="c1">#y = [-log(1.-(i+1)/N) for i in range(len(x))]    </span>
+    <span class="n">y</span> <span class="o">=</span> <span class="p">[</span><span class="o">-</span><span class="n">log</span><span class="p">(</span><span class="mf">1.</span><span class="o">-</span><span class="p">(</span><span class="n">i</span><span class="p">)</span><span class="o">/</span><span class="n">N</span><span class="p">)</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">x</span><span class="p">))]</span>    
+    <span class="c1"># Fit the model y = a * x using np.linalg.lstsq</span>
+    <span class="n">a</span><span class="p">,</span> <span class="n">_</span><span class="p">,</span> <span class="n">_</span><span class="p">,</span> <span class="n">_</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">linalg</span><span class="o">.</span><span class="n">lstsq</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">x</span><span class="p">)[:,</span><span class="n">np</span><span class="o">.</span><span class="n">newaxis</span><span class="p">],</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">y</span><span class="p">),</span> <span class="n">rcond</span><span class="o">=</span><span class="kc">None</span><span class="p">)</span>
+    <span class="nb">id</span> <span class="o">=</span> <span class="n">a</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+    
+    <span class="c1"># TODO: Implement block analysis and decimation plot. It doesn&#39;t affect the results.</span>
+
+    <span class="k">return</span> <span class="nb">int</span><span class="p">(</span><span class="nb">round</span><span class="p">(</span><span class="nb">id</span><span class="p">)),</span> <span class="n">x</span><span class="p">,</span> <span class="n">y</span></div>
+
+
+
+<div class="viewcode-block" id="twoNearestNeighbors"><a class="viewcode-back" href="../../code.html#Pipeline.twoNN.twoNearestNeighbors">[docs]</a><span class="k">class</span> <span class="nc">twoNearestNeighbors</span><span class="p">(</span><span class="n">BaseEstimator</span><span class="p">,</span> <span class="n">DensityMixin</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Class definition for TWO-NN: Intrinsic dimension estimator by a minimal neighborhood information.</span>
+
+<span class="sd">    The TWO-NN estimator uses only the distances to the first two nearest neighbors of each point.</span>
+
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    metric : string, or callable</span>
+<span class="sd">        The distance metric to use. </span>
+<span class="sd">        If metric is a string, it must be one of the options allowed by </span>
+<span class="sd">        scipy.spatial.distance.pdist for its metric parameter, or a metric listed in </span>
+<span class="sd">        :obj:`VALID_METRIC = [precomputed, euclidean]`. If metric is ``precomputed``, X is assumed to</span>
+<span class="sd">        be a distance matrix. Alternatively, if metric is a callable function, it is </span>
+<span class="sd">        called on each pair of instances (rows) and the resulting value recorded. The </span>
+<span class="sd">        callable should take two arrays from X as input and return a value indicating </span>
+<span class="sd">        the distance between them. Default is ``euclidean``.</span>
+
+<span class="sd">    blockAn : bool, default=True</span>
+<span class="sd">        If blockAn is True the algorithm perform a block analysis that allows discriminating the relevant dimensions </span>
+<span class="sd">        as a function of the block size. This allows to study the stability of the estimation with respect to</span>
+<span class="sd">        changes in the neighborhood size, which is crucial for ID estimations when the data lie on a manifold perturbed </span>
+<span class="sd">        by a high-dimensional noise. </span>
+
+<span class="sd">    block_ratio : int, default=20</span>
+<span class="sd">        Set the minimum size of the blocks as `n_samples/block_ratio`. If ``blockAn=False``, block_ratio is ignored.</span>
+
+<span class="sd">    frac : float, default=1</span>
+<span class="sd">        Define the fraction of points in the data set used for ID calculation. By default the full data set is used.   </span>
+
+<span class="sd">    n_jobs : int or None, optional (default=None)</span>
+<span class="sd">        The number of jobs to use for the computation. This works by computing</span>
+<span class="sd">        each of the n_init runs in parallel.</span>
+<span class="sd">        ``None`` means 1 unless in a :obj:`joblib.parallel_backend` context.</span>
+<span class="sd">        ``-1`` means using all processors. See :term:`Glossary &lt;n_jobs&gt;`</span>
+<span class="sd">        for more details.</span>
+
+<span class="sd">    Attributes</span>
+<span class="sd">    ----------</span>
+<span class="sd">    dim_ : int</span>
+<span class="sd">        The intrinsic dimensionality</span>
+<span class="sd">    </span>
+<span class="sd"> </span>
+<span class="sd">    References</span>
+<span class="sd">    ----------</span>
+<span class="sd">    </span>
+<span class="sd">    E. Facco, M. d’Errico, A. Rodriguez and A. Laio, Estimating the intrinsic dimension of datasets by a minimal neighborhood information. `Sci. reports` 7, 12140 (2017) </span>
+
+
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">metric</span><span class="o">=</span><span class="s1">&#39;euclidean&#39;</span><span class="p">,</span>  <span class="n">blockAn</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">block_ratio</span><span class="o">=</span><span class="mi">20</span><span class="p">,</span> <span class="n">frac</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">n_jobs</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">metric</span> <span class="o">=</span> <span class="s1">&#39;euclidean&#39;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">blockAn</span> <span class="o">=</span> <span class="n">blockAn</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">block_ratio</span> <span class="o">=</span> <span class="n">block_ratio</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">frac</span> <span class="o">=</span> <span class="n">frac</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">n_jobs</span> <span class="o">=</span> <span class="n">n_jobs</span>
+
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">frac</span> <span class="o">&gt;</span> <span class="mi">1</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;frac should be between 0 and 1.&quot;</span><span class="p">)</span>
+    
+    
+<div class="viewcode-block" id="twoNearestNeighbors.fit"><a class="viewcode-back" href="../../code.html#Pipeline.twoNN.twoNearestNeighbors.fit">[docs]</a>    <span class="k">def</span> <span class="nf">fit</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">X</span><span class="p">,</span> <span class="n">y</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;A reference implementation of a fitting function.</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        X : array [n_samples, n_samples] if metric == ``precomputed``, or,</span>
+<span class="sd">            [n_samples, n_features] otherwise</span>
+<span class="sd">            The input samples.</span>
+
+<span class="sd">        y : Ignored</span>
+<span class="sd">            Not used, present here for API consistency by convention.</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        self : object</span>
+<span class="sd">            Returns self.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="c1"># Input validation</span>
+        <span class="n">X</span> <span class="o">=</span> <span class="n">check_array</span><span class="p">(</span><span class="n">X</span><span class="p">,</span> <span class="n">order</span><span class="o">=</span><span class="s1">&#39;C&#39;</span><span class="p">,</span> <span class="n">accept_sparse</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">block_ratio</span> <span class="o">&gt;=</span> <span class="n">X</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;block_ratio is larger than the sample size, the minimum size for block analysis </span><span class="se">\</span>
+<span class="s2">                        would be zero. Please set a lower value.&quot;</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">metric</span> <span class="o">==</span> <span class="s2">&quot;precomputed&quot;</span><span class="p">:</span>
+            <span class="c1"># TODO: handle identical distances</span>
+            <span class="n">nbrs</span> <span class="o">=</span> <span class="n">NearestNeighbors</span><span class="p">(</span><span class="n">n_neighbors</span><span class="o">=</span><span class="mi">3</span><span class="p">,</span> <span class="c1"># Only two neighbors used; the point i is counted in its neighborhood</span>
+                                          <span class="n">algorithm</span><span class="o">=</span><span class="s2">&quot;brute&quot;</span><span class="p">,</span>
+                                        <span class="n">metric</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">metric</span><span class="p">,</span>
+                                        <span class="n">n_jobs</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">n_jobs</span><span class="p">)</span><span class="o">.</span><span class="n">fit</span><span class="p">(</span><span class="n">X</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="c1"># Remove duplicates coordinates</span>
+            <span class="n">X</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">unique</span><span class="p">(</span><span class="n">X</span><span class="p">,</span> <span class="n">axis</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
+            <span class="n">nbrs</span> <span class="o">=</span> <span class="n">NearestNeighbors</span><span class="p">(</span><span class="n">n_neighbors</span><span class="o">=</span><span class="mi">3</span><span class="p">,</span> <span class="c1"># Only two neighbors used; the point i is counted in its neighborhood</span>
+                                         <span class="n">algorithm</span><span class="o">=</span><span class="s2">&quot;auto&quot;</span><span class="p">,</span>
+                                        <span class="n">metric</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">metric</span><span class="p">,</span> 
+                                        <span class="n">n_jobs</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">n_jobs</span><span class="p">)</span><span class="o">.</span><span class="n">fit</span><span class="p">(</span><span class="n">X</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">distances_</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">indices_</span> <span class="o">=</span> <span class="n">nbrs</span><span class="o">.</span><span class="n">kneighbors</span><span class="p">(</span><span class="n">X</span><span class="p">)</span> 
+
+     
+        <span class="bp">self</span><span class="o">.</span><span class="n">dim_</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">x_</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">y_</span> <span class="o">=</span> <span class="n">_twoNearestNeighbors</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">distances_</span><span class="p">,</span> 
+                                    <span class="n">blockAn</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">blockAn</span><span class="p">,</span> 
+                             <span class="n">block_ratio</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">block_ratio</span><span class="p">,</span> 
+                                          <span class="n">frac</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">frac</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">is_fitted_</span> <span class="o">=</span> <span class="kc">True</span>
+        <span class="k">return</span> <span class="bp">self</span></div></div>
+
+
+</pre></div>
+
+          </div>
+          
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper"><div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="../../index.html">Documentation overview</a><ul>
+  <li><a href="../index.html">Module code</a><ul>
+  </ul></li>
+  </ul></li>
+</ul>
+</div>
+<div id="searchbox" style="display: none" role="search">
+  <h3>Quick search</h3>
+    <form class="search" action="../../search.html" method="get">
+      <div><input type="text" name="q" /></div>
+      <div><input type="submit" value="Go" /></div>
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &copy;2019, Maria d'Errico.
+      
+      |
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 1.5.6</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.12</a>
+      
+    </div>
+
+    
+
+    
+  </body>
+</html>

@@ -1,0 +1,549 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>Pipeline.DPA module &#8212; DPApipeline 0.1 documentation</title>
+    
+    <link rel="stylesheet" href="_static/alabaster.css" type="text/css" />
+    <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    './',
+        VERSION:     '0.1',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true,
+        SOURCELINK_SUFFIX: '.txt'
+      };
+    </script>
+    <script type="text/javascript" src="_static/jquery.js"></script>
+    <script type="text/javascript" src="_static/underscore.js"></script>
+    <script type="text/javascript" src="_static/doctools.js"></script>
+    <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.0/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+   
+  <link rel="stylesheet" href="_static/custom.css" type="text/css" />
+  
+  
+  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
+
+  </head>
+  <body role="document">
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          
+
+          <div class="body" role="main">
+            
+  <div class="section" id="pipeline-dpa-module">
+<h1>Pipeline.DPA module<a class="headerlink" href="#pipeline-dpa-module" title="Permalink to this headline">¶</a></h1>
+<span class="target" id="module-Pipeline.DPA"></span><dl class="class">
+<dt id="Pipeline.DPA.DensityPeakAdvanced">
+<em class="property">class </em><code class="descclassname">Pipeline.DPA.</code><code class="descname">DensityPeakAdvanced</code><span class="sig-paren">(</span><em>Z=1</em>, <em>metric='euclidean'</em>, <em>densities=None</em>, <em>err_densities=None</em>, <em>k_hat=None</em>, <em>nn_distances=None</em>, <em>nn_indices=None</em>, <em>affinity='precomputed'</em>, <em>density_algo='PAk'</em>, <em>k_max=1000</em>, <em>D_thr=23.92812698</em>, <em>dim=None</em>, <em>dim_algo='twoNN'</em>, <em>blockAn=True</em>, <em>block_ratio=5</em>, <em>frac=1</em>, <em>n_jobs=None</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/Pipeline/DPA.html#DensityPeakAdvanced"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#Pipeline.DPA.DensityPeakAdvanced" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal"><span class="pre">sklearn.base.BaseEstimator</span></code>, <code class="xref py py-class docutils literal"><span class="pre">sklearn.base.DensityMixin</span></code></p>
+<p>Class definition for the non-parametric Density Peak clustering.</p>
+<p>The default pipeline makes use of the <cite>PAk</cite> density estimator and of the <cite>TWO-NN</cite> intristic dimension estimator.
+The densities and the corresponding errors can also be provided as precomputed arrays.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first">
+<li><p class="first"><strong>Z</strong> (<em>float, default = 1</em>) &#8211; The number of standard deviations, which fixes the level of statistical confidence at which
+one decides to consider a cluster meaningful.</p>
+</li>
+<li><p class="first"><strong>metric</strong> (<em>string, or callable</em>) &#8211; The distance metric to use.
+If metric is a string, it must be one of the options allowed by
+scipy.spatial.distance.pdist for its metric parameter, or a metric listed in
+<code class="xref py py-obj docutils literal"><span class="pre">VALID_METRIC</span> <span class="pre">=</span> <span class="pre">[precomputed,</span> <span class="pre">euclidean]</span></code>. If metric is <code class="docutils literal"><span class="pre">precomputed</span></code>, X is assumed to
+be a distance matrix. Alternatively, if metric is a callable function, it is
+called on each pair of instances (rows) and the resulting value recorded. The
+callable should take two arrays from X as input and return a value indicating
+the distance between them. Default is <code class="docutils literal"><span class="pre">euclidean</span></code>.</p>
+</li>
+<li><p class="first"><strong>densities</strong> (<em>array [n_samples], default = None</em>) &#8211; The logarithm of the density at each point. If provided, the following parameters are ignored:
+<code class="docutils literal"><span class="pre">density_algo</span></code>, <code class="docutils literal"><span class="pre">k_max</span></code>, <code class="docutils literal"><span class="pre">D_thr</span></code>.</p>
+</li>
+<li><p class="first"><strong>err_densities</strong> (<em>array [n_samples], default = None</em>) &#8211; The uncertainty in the density estimation, obtained by computing
+the inverse of the Fisher information matrix.</p>
+</li>
+<li><p class="first"><strong>k_hat</strong> (<em>array [n_samples], default = None</em>) &#8211; The optimal number of neighbors for which the condition of constant density holds.</p>
+</li>
+<li><p class="first"><strong>nn_distances</strong> (<em>array [n_samples, k_max+1]</em>) &#8211; Distances to the k_max neighbors of each points.</p>
+</li>
+<li><p class="first"><strong>nn_indices</strong> (<em>array [n_samples, k_max+1]</em>) &#8211; Indices of the k_max neighbors of each points.</p>
+</li>
+<li><p class="first"><strong>affinity</strong> (<em>string or callable, default &#8216;precomputed&#8217;</em>) &#8211;</p>
+<dl class="docutils">
+<dt>How to construct the affinity matrix.</dt>
+<dd><ul class="first last simple">
+<li><code class="docutils literal"><span class="pre">nearest_neighbors</span></code> : construct the affinity matrix by computing a
+graph of nearest neighbors.</li>
+<li><code class="docutils literal"><span class="pre">rbf</span></code> : construct the affinity matrix using a radial basis function
+(RBF) kernel.</li>
+<li><code class="docutils literal"><span class="pre">precomputed</span></code> : interpret <code class="docutils literal"><span class="pre">X</span></code> as a precomputed affinity matrix.</li>
+<li><code class="docutils literal"><span class="pre">precomputed_nearest_neighbors</span></code> : interpret <code class="docutils literal"><span class="pre">X</span></code> as a sparse graph
+of precomputed nearest neighbors, and constructs the affinity matrix
+by selecting the <code class="docutils literal"><span class="pre">n_neighbors</span></code> nearest neighbors.</li>
+<li>one of the kernels supported by
+<code class="xref py py-func docutils literal"><span class="pre">pairwise_kernels()</span></code>.</li>
+</ul>
+</dd>
+</dl>
+</li>
+<li><p class="first"><strong>density_algo</strong> (<em>string, default = &#8220;PAk&#8221;</em>) &#8211; Define the algorithm to use as density estimator. It mast be one of the options allowed by
+<code class="xref py py-obj docutils literal"><span class="pre">VALID_DENSITY</span> <span class="pre">=</span> <span class="pre">[PAk,</span> <span class="pre">kNN]</span></code>.</p>
+</li>
+<li><p class="first"><strong>k_max</strong> (<em>int, default=1000</em>) &#8211; This parameter is considered if density_algo is <code class="docutils literal"><span class="pre">PAk</span></code> or <code class="docutils literal"><span class="pre">kNN</span></code>, it is ignored otherwise.
+k_max set the maximum number of nearest-neighbors considered by the density estimator.
+If <code class="docutils literal"><span class="pre">density_algo=PAk</span></code>, k_max is used by the algorithm in the search for the
+largest number of neighbors <code class="docutils literal"><span class="pre">k_hat</span></code> for which the condition of constant density
+holds, within a given level of confidence.
+If <code class="docutils literal"><span class="pre">density_algo=kNN</span></code>, k_max set the number of neighbors to be used by the standard
+k-Nearest Neighbor algorithm.
+If the number of points in the sample N is
+less than the default value, k_max will be set automatically to the value <code class="docutils literal"><span class="pre">N/2</span></code>.</p>
+</li>
+<li><p class="first"><strong>D_thr</strong> (<em>float, default=23.92812698</em>) &#8211; This parameter is considered if density_algo is <code class="docutils literal"><span class="pre">PAk</span></code>, it is ignored otherwise.
+Set the level of confidence in the PAk density estimator. The default value corresponds to a p-value of
+<span class="math">\(10^{-6}\)</span> for a <span class="math">\(\chiˆ2\)</span> distribution with one degree of freedom.</p>
+</li>
+<li><p class="first"><strong>dim</strong> (<em>int, default = None</em>) &#8211; Intrinsic dimensionality of the sample. If dim is provided, the following parameters are ignored:
+<code class="docutils literal"><span class="pre">dim_algo</span></code>, <code class="docutils literal"><span class="pre">blockAn</span></code>, <code class="docutils literal"><span class="pre">block_ratio</span></code>, <code class="docutils literal"><span class="pre">frac</span></code>.</p>
+</li>
+<li><p class="first"><strong>dim_algo</strong> (<em>string, or callable, default=&#8221;twoNN&#8221;</em>) &#8211; Method for intrinsic dimensionality calculation. If dim_algo is <code class="docutils literal"><span class="pre">auto</span></code>, dim is assumed to be
+equal to n_samples. If dim_algo is a string, it must be one of the options allowed by <code class="xref py py-obj docutils literal"><span class="pre">VALID_DIM</span> <span class="pre">=</span> <span class="pre">[auto,</span> <span class="pre">twoNN]</span></code>.</p>
+</li>
+<li><p class="first"><strong>blockAn</strong> (<em>bool, default=True</em>) &#8211; This parameter is considered if dim_algo is <code class="docutils literal"><span class="pre">twoNN</span></code>, it is ignored otherwise.
+If blockAn is True the algorithm perform a block analysis that allows discriminating the relevant dimensions
+as a function of the block size. This allows to study the stability of the estimation with respect to
+changes in the neighborhood size, which is crucial for ID estimations when the data lie on a
+manifold perturbed by a high-dimensional noise.</p>
+</li>
+<li><p class="first"><strong>block_ratio</strong> (<em>int, default=5</em>) &#8211; This parameter is considered if dim_algo is <code class="docutils literal"><span class="pre">twoNN</span></code>, it is ignored otherwise.
+Set the minimum size of the blocks as <cite>n_samples/block_ratio</cite>. If <code class="docutils literal"><span class="pre">blockAn=False</span></code>, <code class="docutils literal"><span class="pre">block_ratio</span></code> is ignored.</p>
+</li>
+<li><p class="first"><strong>frac</strong> (<em>float, default=1</em>) &#8211; This parameter is considered if dim_algo is <code class="docutils literal"><span class="pre">twoNN</span></code>, it is ignored otherwise.
+Define the fraction of points in the data set used for ID calculation. By default the full data set is used.</p>
+</li>
+<li><p class="first"><strong>n_jobs</strong> (<em>int or None, optional (default=None)</em>) &#8211; The number of jobs to use for the computation. This works by computing
+each of the n_init runs in parallel.
+<code class="docutils literal"><span class="pre">None</span></code> means 1 unless in a <code class="xref py py-obj docutils literal"><span class="pre">joblib.parallel_backend</span></code> context.
+<code class="docutils literal"><span class="pre">-1</span></code> means using all processors. See <span class="xref std std-term">Glossary</span>
+for more details.</p>
+</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Variables:</th><td class="field-body"><ul class="first last simple">
+<li><strong>labels</strong> (<a class="reference external" href="https://docs.python.org/3/library/array.html#module-array" title="(in Python v3.8)"><em>array</em></a><em> [</em><em>Nclus</em><em>]</em>) &#8211; The clustering labels assigned to each point in the data set.</li>
+<li><strong>halos</strong> (<a class="reference external" href="https://docs.python.org/3/library/array.html#module-array" title="(in Python v3.8)"><em>array</em></a><em> [</em><em>Nclus</em><em>]</em>) &#8211; The clustering labels assigned to each point in the data set. Points identified as halos have
+label equal to zero.</li>
+<li><strong>topography</strong> (<a class="reference external" href="https://docs.python.org/3/library/array.html#module-array" title="(in Python v3.8)"><em>array</em></a><em> [</em><em>Nclus</em><em>, </em><em>Nclus</em><em>]</em>) &#8211; Let be Nclus the number of clusters, the topography consists in a Nclus × Nclus symmetric matrix,
+in which the diagonal entries are the heights of the peaks and the off-diagonal entries are the
+heights of the saddle points.</li>
+<li><strong>distances</strong> (<a class="reference external" href="https://docs.python.org/3/library/array.html#module-array" title="(in Python v3.8)"><em>array</em></a><em> [</em><em>n_samples</em><em>, </em><em>k_max+1</em><em>]</em>) &#8211; Distances to the k_max neighbors of each points. The point itself is included in the array.</li>
+<li><strong>indices</strong> (<a class="reference external" href="https://docs.python.org/3/library/array.html#module-array" title="(in Python v3.8)"><em>array</em></a><em> [</em><em>n_samples</em><em>, </em><em>k_max+1</em><em>]</em>) &#8211; Indices of the k_max neighbors of each points. The point itself is included in the array.</li>
+<li><strong>k_hat</strong> (<a class="reference external" href="https://docs.python.org/3/library/array.html#module-array" title="(in Python v3.8)"><em>array</em></a><em> [</em><em>n_samples</em><em>]</em><em>, </em><em>default = None</em>) &#8211; The optimal number of neighbors for which the condition of constant density holds.</li>
+<li><strong>centers</strong> (<a class="reference external" href="https://docs.python.org/3/library/array.html#module-array" title="(in Python v3.8)"><em>array</em></a><em> [</em><em>Nclus</em><em>]</em>) &#8211; The clustering labels assigned to each point in the data set.</li>
+</ul>
+</td>
+</tr>
+</tbody>
+</table>
+<p class="rubric">Example</p>
+<p class="rubric">References</p>
+<ol class="upperalpha simple" start="13">
+<li>d’Errico, E. Facco, A. Laio and A. Rodriguez, Automatic topography of high-dimensional data sets by non-parametric Density Peak clustering (2018) <a class="reference external" href="https://arxiv.org/abs/1802.10549">https://arxiv.org/abs/1802.10549</a></li>
+</ol>
+<dl class="method">
+<dt id="Pipeline.DPA.DensityPeakAdvanced.fit">
+<code class="descname">fit</code><span class="sig-paren">(</span><em>X</em>, <em>y=None</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/Pipeline/DPA.html#DensityPeakAdvanced.fit"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#Pipeline.DPA.DensityPeakAdvanced.fit" title="Permalink to this definition">¶</a></dt>
+<dd><p>Fit the DPA clustering on the data.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>X</strong> (<em>array [n_samples, n_samples] if metric == “precomputed”, or,</em>) &#8211; [n_samples, n_features] otherwise
+The input samples. Similarities / affinities between
+instances if <code class="docutils literal"><span class="pre">affinity='precomputed'</span></code>.</li>
+<li><strong>y</strong> (<em>Ignored</em>) &#8211; Not used, present here for API consistency by convention.</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first"><strong>self</strong> &#8211; Returns self.</p>
+</td>
+</tr>
+<tr class="field-odd field"><th class="field-name">Return type:</th><td class="field-body"><p class="first last"><a class="reference external" href="https://docs.python.org/3/library/functions.html#object" title="(in Python v3.8)">object</a></p>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="Pipeline.DPA.DensityPeakAdvanced.get_params">
+<code class="descname">get_params</code><span class="sig-paren">(</span><em>deep=True</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/Pipeline/DPA.html#DensityPeakAdvanced.get_params"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#Pipeline.DPA.DensityPeakAdvanced.get_params" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="Pipeline.DPA.DensityPeakAdvanced.set_params">
+<code class="descname">set_params</code><span class="sig-paren">(</span><em>**parameters</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/Pipeline/DPA.html#DensityPeakAdvanced.set_params"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#Pipeline.DPA.DensityPeakAdvanced.set_params" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="function">
+<dt id="Pipeline.DPA._DensityPeakAdvanced">
+<code class="descclassname">Pipeline.DPA.</code><code class="descname">_DensityPeakAdvanced</code><span class="sig-paren">(</span><em>densities</em>, <em>err_densities</em>, <em>k_hat</em>, <em>distances</em>, <em>indices</em>, <em>Z</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/Pipeline/DPA.html#_DensityPeakAdvanced"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#Pipeline.DPA._DensityPeakAdvanced" title="Permalink to this definition">¶</a></dt>
+<dd><p>Main function implementing the Density Peak Advanced clustering algorithm:</p>
+<ul class="simple">
+<li>Automatic detection of cluster centers</li>
+<li>Point assignament to clusters in order of decreasing <cite>g</cite></li>
+<li>Topography reconstruction: search of saddle points and cluster merging</li>
+</ul>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>densities</strong> (<em>array [n_samples]</em>) &#8211; The logarithm of the density at each point.</li>
+<li><strong>err_densities</strong> (<em>array [n_samples]</em>) &#8211; The uncertainty in the density estimation, obtained by computing
+the inverse of the Fisher information matrix.</li>
+<li><strong>k_hat</strong> (<em>array [n_samples]</em>) &#8211; The optimal number of neighbors for which the condition of constant density holds.</li>
+<li><strong>distances</strong> (<em>array [n_samples, k_max+1]</em>) &#8211; Distances to the k_max neighbors of each points. The point itself is included in the array.</li>
+<li><strong>indices</strong> (<em>array [n_samples, k_max+1]</em>) &#8211; Indices of the k_max neighbors of each points. The point itself is included in the array.</li>
+<li><strong>Z</strong> (<em>float, default = 1</em>) &#8211; The number of standard deviations, which fixes the level of statistical confidence at which
+one decides to consider a cluster meaningful.</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Variables:</th><td class="field-body"><ul class="first last simple">
+<li><strong>labels</strong> (<a class="reference external" href="https://docs.python.org/3/library/array.html#module-array" title="(in Python v3.8)"><em>array</em></a><em> [</em><em>Nclus</em><em>]</em>) &#8211; The clustering labels assigned to each point in the data set.</li>
+<li><strong>halos</strong> (<a class="reference external" href="https://docs.python.org/3/library/array.html#module-array" title="(in Python v3.8)"><em>array</em></a><em> [</em><em>Nclus</em><em>]</em>) &#8211; The clustering labels assigned to each point in the data set. Points identified as halos have
+clustering lable equal to <code class="docutils literal"><span class="pre">-1</span></code>.</li>
+<li><strong>topography</strong> (<a class="reference external" href="https://docs.python.org/3/library/array.html#module-array" title="(in Python v3.8)"><em>array</em></a><em> [</em><em>Nclus</em><em>, </em><em>Nclus</em><em>]</em>) &#8211; Let be Nclus the number of clusters, the topography consists in a Nclus × Nclus symmetric matrix,
+in which the diagonal entries are the heights of the peaks and the off-diagonal entries are the
+heights of the saddle points.</li>
+<li><strong>centers</strong> (<a class="reference external" href="https://docs.python.org/3/library/array.html#module-array" title="(in Python v3.8)"><em>array</em></a><em> [</em><em>Nclus</em><em>]</em>) &#8211; The list of points identified as the centers of the Nclus statistically significant clusters.</li>
+</ul>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+</div>
+<div class="section" id="pipeline-pak-module">
+<h1>Pipeline.PAk module<a class="headerlink" href="#pipeline-pak-module" title="Permalink to this headline">¶</a></h1>
+<span class="target" id="module-Pipeline.PAk"></span><dl class="class">
+<dt id="Pipeline.PAk.PointAdaptive_kNN">
+<em class="property">class </em><code class="descclassname">Pipeline.PAk.</code><code class="descname">PointAdaptive_kNN</code><span class="sig-paren">(</span><em>k_max=1000</em>, <em>D_thr=23.92812698</em>, <em>metric='euclidean'</em>, <em>dim_algo='auto'</em>, <em>nn_distances=None</em>, <em>nn_indices=None</em>, <em>blockAn=True</em>, <em>block_ratio=20</em>, <em>frac=1</em>, <em>dim=None</em>, <em>n_jobs=None</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/Pipeline/PAk.html#PointAdaptive_kNN"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#Pipeline.PAk.PointAdaptive_kNN" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal"><span class="pre">sklearn.base.BaseEstimator</span></code>, <code class="xref py py-class docutils literal"><span class="pre">sklearn.base.DensityMixin</span></code></p>
+<p>Class definition for the Pointwise Adaptive k-NN density estimator.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>k_max</strong> (<em>int, default=1000</em>) &#8211; The maximum number of nearest-neighbors considered by the procedure that returns the
+largest number of neighbors <code class="docutils literal"><span class="pre">k_hat</span></code> for which the condition of constant density
+holds, within a given level of confidence. If the number of points in the sample <cite>N</cite> is
+less than the default value, k_max will be set automatically to the value <code class="docutils literal"><span class="pre">N/2</span></code>.</li>
+<li><strong>D_thr</strong> (<em>float, default=23.92812698</em>) &#8211; Set the level of confidence. The default value corresponds to a p-value of
+<span class="math">\(10^{-6}\)</span> for a <span class="math">\(\chiˆ2\)</span> distribution with one degree of freedom.</li>
+<li><strong>metric</strong> (<em>string, or callable</em>) &#8211; The distance metric to use.
+If metric is a string, it must be one of the options allowed by
+scipy.spatial.distance.pdist for its metric parameter, or a metric listed in
+<code class="xref py py-obj docutils literal"><span class="pre">VALID_METRIC</span> <span class="pre">=</span> <span class="pre">[precomputed,</span> <span class="pre">euclidean]</span></code>. If metric is <code class="docutils literal"><span class="pre">precomputed</span></code>, X is assumed to
+be a distance matrix. Alternatively, if metric is a callable function, it is
+called on each pair of instances (rows) and the resulting value recorded. The
+callable should take two arrays from X as input and return a value indicating
+the distance between them. Default is <code class="docutils literal"><span class="pre">euclidean</span></code>.</li>
+<li><strong>dim_algo</strong> (<em>string, or callable</em>) &#8211; Method for intrinsic dimensionality calculation. If dim_algo is <code class="docutils literal"><span class="pre">auto</span></code>, dim is assumed to be
+equal to n_samples. If dim_algo is a string, it must be one of the options allowed by <code class="xref py py-obj docutils literal"><span class="pre">VALID_DIM</span> <span class="pre">=</span> <span class="pre">[auto,</span> <span class="pre">twoNN]</span></code>.</li>
+<li><strong>nn_distances</strong> (<em>array [n_samples, k_max+1]</em>) &#8211; Distances to the k_max neighbors of each points.</li>
+<li><strong>nn_indices</strong> (<em>array [n_samples, k_max+1]</em>) &#8211; Indices of the k_max neighbors of each points.</li>
+<li><strong>blockAn</strong> (<em>bool, default=True</em>) &#8211; This parameter is considered if dim_algo is <code class="docutils literal"><span class="pre">twoNN</span></code>, it is ignored otherwise.
+If blockAn is True the algorithm perform a block analysis that allows discriminating the relevant dimensions
+as a function of the block size. This allows to study the stability of the estimation with respect to
+changes in the neighborhood size, which is crucial for ID estimations when the data lie on a manifold perturbed
+by a high-dimensional noise.</li>
+<li><strong>block_ratio</strong> (<em>int, default=20</em>) &#8211; This parameter is considered if dim_algo is <code class="docutils literal"><span class="pre">twoNN</span></code>, it is ignored otherwise.
+Set the minimum size of the blocks as <cite>n_samples/block_ratio</cite>. If <code class="docutils literal"><span class="pre">blockAn=False</span></code>, block_ratio is ignored.</li>
+<li><strong>frac</strong> (<em>float, default=1</em>) &#8211; This parameter is considered if dim_algo is <code class="docutils literal"><span class="pre">twoNN</span></code>, it is ignored otherwise.
+Define the fraction of points in the data set used for ID calculation. By default the full data set is used.</li>
+<li><strong>dim</strong> (<em>int</em>) &#8211; Intrinsic dimensionality of the sample. If dim is provided, dim_algo is ignored.</li>
+<li><strong>n_jobs</strong> (<em>int or None, optional (default=None)</em>) &#8211; The number of jobs to use for the computation. This works by computing
+each of the n_init runs in parallel.
+<code class="docutils literal"><span class="pre">None</span></code> means 1 unless in a <code class="xref py py-obj docutils literal"><span class="pre">joblib.parallel_backend</span></code> context.
+<code class="docutils literal"><span class="pre">-1</span></code> means using all processors. See <span class="xref std std-term">Glossary</span>
+for more details.</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Variables:</th><td class="field-body"><ul class="first last simple">
+<li><strong>distances</strong> (<a class="reference external" href="https://docs.python.org/3/library/array.html#module-array" title="(in Python v3.8)"><em>array</em></a><em> [</em><em>n_samples</em><em>, </em><em>k_max+1</em><em>]</em>) &#8211; Distances to the k_max neighbors of each points.</li>
+<li><strong>indices</strong> (<a class="reference external" href="https://docs.python.org/3/library/array.html#module-array" title="(in Python v3.8)"><em>array</em></a><em> [</em><em>n_samples</em><em>, </em><em>k_max+1</em><em>]</em>) &#8211; Indices of the k_max neighbors of each points.</li>
+<li><strong>densities</strong> (<a class="reference external" href="https://docs.python.org/3/library/array.html#module-array" title="(in Python v3.8)"><em>array</em></a><em> [</em><em>n_samples</em><em>]</em>) &#8211; The logarithm of the density at each point.</li>
+<li><strong>err_densities</strong> (<a class="reference external" href="https://docs.python.org/3/library/array.html#module-array" title="(in Python v3.8)"><em>array</em></a><em> [</em><em>n_samples</em><em>]</em>) &#8211; The uncertainty in the density estimation, obtained by computing
+the inverse of the Fisher information matrix.</li>
+<li><strong>k_hat</strong> (<a class="reference external" href="https://docs.python.org/3/library/array.html#module-array" title="(in Python v3.8)"><em>array</em></a><em> [</em><em>n_samples</em><em>]</em>) &#8211; The optimal number of neighbors for which the condition of constant density holds.</li>
+<li><strong>dc</strong> (<a class="reference external" href="https://docs.python.org/3/library/array.html#module-array" title="(in Python v3.8)"><em>array</em></a><em> [</em><em>n_sample</em><em>]</em>) &#8211; The radius of the optimal neighborhood for each point.</li>
+</ul>
+</td>
+</tr>
+</tbody>
+</table>
+<p class="rubric">Examples</p>
+<div class="highlight-default"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="kn">from</span> <span class="nn">DPA</span> <span class="k">import</span> <span class="n">PAk</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">X</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([[</span><span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">],</span> <span class="p">[</span><span class="mi">2</span><span class="p">,</span> <span class="mi">1</span><span class="p">],</span> <span class="p">[</span><span class="mi">1</span><span class="p">,</span> <span class="mi">0</span><span class="p">],</span>
+<span class="gp">... </span>              <span class="p">[</span><span class="mi">4</span><span class="p">,</span> <span class="mi">7</span><span class="p">],</span> <span class="p">[</span><span class="mi">3</span><span class="p">,</span> <span class="mi">5</span><span class="p">],</span> <span class="p">[</span><span class="mi">3</span><span class="p">,</span> <span class="mi">6</span><span class="p">]])</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">est</span> <span class="o">=</span> <span class="n">PAk</span><span class="o">.</span><span class="n">PointAdaptive_kNN</span><span class="p">()</span><span class="o">.</span><span class="n">fit</span><span class="p">(</span><span class="n">X</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">est</span><span class="o">.</span><span class="n">distances_</span>
+<span class="go">array([[0.        , 1.        , 1.        ],</span>
+<span class="go">       [0.        , 1.        , 1.41421356],</span>
+<span class="go">       [0.        , 1.        , 1.41421356],</span>
+<span class="go">       [0.        , 1.41421356, 2.23606798],</span>
+<span class="go">       [0.        , 1.        , 2.23606798],</span>
+<span class="go">       [0.        , 1.        , 1.41421356]])</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">est</span><span class="o">.</span><span class="n">indices_</span>
+<span class="go">array([[0, 1, 2],</span>
+<span class="go">       [1, 0, 2],</span>
+<span class="go">       [2, 0, 1],</span>
+<span class="go">       [3, 5, 4],</span>
+<span class="go">       [4, 5, 3],</span>
+<span class="go">       [5, 4, 3]])</span>
+</pre></div>
+</div>
+<p class="rubric">References</p>
+<ol class="upperalpha simple">
+<li>Rodriguez, M. d’Errico, E. Facco and A. Laio, Computing the free energy without collective variables. <cite>J. chemical theory computation</cite> 14, 1206–1215 (2018).</li>
+</ol>
+<dl class="method">
+<dt id="Pipeline.PAk.PointAdaptive_kNN.fit">
+<code class="descname">fit</code><span class="sig-paren">(</span><em>X</em>, <em>y=None</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/Pipeline/PAk.html#PointAdaptive_kNN.fit"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#Pipeline.PAk.PointAdaptive_kNN.fit" title="Permalink to this definition">¶</a></dt>
+<dd><p>Fit the PAk estimator on the data.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>X</strong> (array [n_samples, n_samples] if metric == <code class="docutils literal"><span class="pre">precomputed</span></code>, or,) &#8211; [n_samples, n_features] otherwise
+The input samples.</li>
+<li><strong>y</strong> (<em>Ignored</em>) &#8211; Not used, present here for API consistency by convention.</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first"><strong>self</strong> &#8211; Returns self.</p>
+</td>
+</tr>
+<tr class="field-odd field"><th class="field-name">Return type:</th><td class="field-body"><p class="first last"><a class="reference external" href="https://docs.python.org/3/library/functions.html#object" title="(in Python v3.8)">object</a></p>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="function">
+<dt id="Pipeline.PAk._PointAdaptive_kNN">
+<code class="descclassname">Pipeline.PAk.</code><code class="descname">_PointAdaptive_kNN</code><span class="sig-paren">(</span><em>distances</em>, <em>indices</em>, <em>k_max=1000</em>, <em>D_thr=23.92812698</em>, <em>dim=None</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/Pipeline/PAk.html#_PointAdaptive_kNN"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#Pipeline.PAk._PointAdaptive_kNN" title="Permalink to this definition">¶</a></dt>
+<dd><p>Main function implementing the Pointwise Adaptive k-NN density estimator.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>distances</strong> (<em>array [n_samples, k_max+1]</em>) &#8211; Distances to the k_max neighbors of each points. The point is included.</li>
+<li><strong>indices</strong> (<em>array [n_samples, k_max+1]</em>) &#8211; Indices of the k_max neighbors of each points. The point is included.</li>
+<li><strong>k_max</strong> (<em>int, default=1000</em>) &#8211; The maximum number of nearest-neighbors considered by the procedure that returns the
+largest number of neighbors <code class="docutils literal"><span class="pre">k_hat</span></code> for which the condition of constant density
+holds, within a given level of confidence. If the number of points in the sample <cite>N</cite> is
+less than the default value, k_max will be set automatically to the value <code class="docutils literal"><span class="pre">N/2</span></code>.</li>
+<li><strong>D_thr</strong> (<em>float, default=23.92812698</em>) &#8211; Set the level of confidence. The default value corresponds to a p-value of
+<span class="math">\(10^{-6}\)</span> for a <span class="math">\(\chiˆ2\)</span> distribution with one degree of freedom.</li>
+<li><strong>dim</strong> (<em>int</em>) &#8211; Intrinsic dimensionality of the sample.</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Variables:</th><td class="field-body"><ul class="first last simple">
+<li><strong>densities</strong> (<a class="reference external" href="https://docs.python.org/3/library/array.html#module-array" title="(in Python v3.8)"><em>array</em></a><em> [</em><em>n_samples</em><em>]</em>) &#8211; The logarithm of the density at each point.</li>
+<li><strong>err_densities</strong> (<a class="reference external" href="https://docs.python.org/3/library/array.html#module-array" title="(in Python v3.8)"><em>array</em></a><em> [</em><em>n_samples</em><em>]</em>) &#8211; The uncertainty in the density estimation, obtained by computing
+the inverse of the Fisher information matrix.</li>
+<li><strong>k_hat</strong> (<a class="reference external" href="https://docs.python.org/3/library/array.html#module-array" title="(in Python v3.8)"><em>array</em></a><em> [</em><em>n_samples</em><em>]</em>) &#8211; The optimal number of neighbors for which the condition of constant density holds.</li>
+<li><strong>dc</strong> (<a class="reference external" href="https://docs.python.org/3/library/array.html#module-array" title="(in Python v3.8)"><em>array</em></a><em> [</em><em>n_sample</em><em>]</em>) &#8211; The radius of the optimal neighborhood for each point.</li>
+</ul>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+</div>
+<div class="section" id="pipeline-twonn-module">
+<h1>Pipeline.twoNN module<a class="headerlink" href="#pipeline-twonn-module" title="Permalink to this headline">¶</a></h1>
+<span class="target" id="module-Pipeline.twoNN"></span><dl class="class">
+<dt id="Pipeline.twoNN.twoNearestNeighbors">
+<em class="property">class </em><code class="descclassname">Pipeline.twoNN.</code><code class="descname">twoNearestNeighbors</code><span class="sig-paren">(</span><em>metric='euclidean'</em>, <em>blockAn=True</em>, <em>block_ratio=20</em>, <em>frac=1</em>, <em>n_jobs=None</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/Pipeline/twoNN.html#twoNearestNeighbors"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#Pipeline.twoNN.twoNearestNeighbors" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal"><span class="pre">sklearn.base.BaseEstimator</span></code>, <code class="xref py py-class docutils literal"><span class="pre">sklearn.base.DensityMixin</span></code></p>
+<p>Class definition for TWO-NN: Intrinsic dimension estimator by a minimal neighborhood information.</p>
+<p>The TWO-NN estimator uses only the distances to the first two nearest neighbors of each point.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>metric</strong> (<em>string, or callable</em>) &#8211; The distance metric to use.
+If metric is a string, it must be one of the options allowed by
+scipy.spatial.distance.pdist for its metric parameter, or a metric listed in
+<code class="xref py py-obj docutils literal"><span class="pre">VALID_METRIC</span> <span class="pre">=</span> <span class="pre">[precomputed,</span> <span class="pre">euclidean]</span></code>. If metric is <code class="docutils literal"><span class="pre">precomputed</span></code>, X is assumed to
+be a distance matrix. Alternatively, if metric is a callable function, it is
+called on each pair of instances (rows) and the resulting value recorded. The
+callable should take two arrays from X as input and return a value indicating
+the distance between them. Default is <code class="docutils literal"><span class="pre">euclidean</span></code>.</li>
+<li><strong>blockAn</strong> (<em>bool, default=True</em>) &#8211; If blockAn is True the algorithm perform a block analysis that allows discriminating the relevant dimensions
+as a function of the block size. This allows to study the stability of the estimation with respect to
+changes in the neighborhood size, which is crucial for ID estimations when the data lie on a manifold perturbed
+by a high-dimensional noise.</li>
+<li><strong>block_ratio</strong> (<em>int, default=20</em>) &#8211; Set the minimum size of the blocks as <cite>n_samples/block_ratio</cite>. If <code class="docutils literal"><span class="pre">blockAn=False</span></code>, block_ratio is ignored.</li>
+<li><strong>frac</strong> (<em>float, default=1</em>) &#8211; Define the fraction of points in the data set used for ID calculation. By default the full data set is used.</li>
+<li><strong>n_jobs</strong> (<em>int or None, optional (default=None)</em>) &#8211; The number of jobs to use for the computation. This works by computing
+each of the n_init runs in parallel.
+<code class="docutils literal"><span class="pre">None</span></code> means 1 unless in a <code class="xref py py-obj docutils literal"><span class="pre">joblib.parallel_backend</span></code> context.
+<code class="docutils literal"><span class="pre">-1</span></code> means using all processors. See <span class="xref std std-term">Glossary</span>
+for more details.</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Variables:</th><td class="field-body"><p class="first last"><strong>dim</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.8)"><em>int</em></a>) &#8211; The intrinsic dimensionality</p>
+</td>
+</tr>
+</tbody>
+</table>
+<p class="rubric">References</p>
+<ol class="upperalpha simple" start="5">
+<li>Facco, M. d’Errico, A. Rodriguez and A. Laio, Estimating the intrinsic dimension of datasets by a minimal neighborhood information. <cite>Sci. reports</cite> 7, 12140 (2017)</li>
+</ol>
+<dl class="method">
+<dt id="Pipeline.twoNN.twoNearestNeighbors.fit">
+<code class="descname">fit</code><span class="sig-paren">(</span><em>X</em>, <em>y=None</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/Pipeline/twoNN.html#twoNearestNeighbors.fit"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#Pipeline.twoNN.twoNearestNeighbors.fit" title="Permalink to this definition">¶</a></dt>
+<dd><p>A reference implementation of a fitting function.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>X</strong> (array [n_samples, n_samples] if metric == <code class="docutils literal"><span class="pre">precomputed</span></code>, or,) &#8211; [n_samples, n_features] otherwise
+The input samples.</li>
+<li><strong>y</strong> (<em>Ignored</em>) &#8211; Not used, present here for API consistency by convention.</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first"><strong>self</strong> &#8211; Returns self.</p>
+</td>
+</tr>
+<tr class="field-odd field"><th class="field-name">Return type:</th><td class="field-body"><p class="first last"><a class="reference external" href="https://docs.python.org/3/library/functions.html#object" title="(in Python v3.8)">object</a></p>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="function">
+<dt id="Pipeline.twoNN._twoNearestNeighbors">
+<code class="descclassname">Pipeline.twoNN.</code><code class="descname">_twoNearestNeighbors</code><span class="sig-paren">(</span><em>distances</em>, <em>blockAn=True</em>, <em>block_ratio=20</em>, <em>frac=1</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/Pipeline/twoNN.html#_twoNearestNeighbors"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#Pipeline.twoNN._twoNearestNeighbors" title="Permalink to this definition">¶</a></dt>
+<dd><p>Main function for the TWO-NN estimator.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
+<li><strong>distances</strong> (<em>array [n_samples, k_max]</em>) &#8211; Distances to the k_max neighbors of each points.</li>
+<li><strong>blockAn</strong> (<em>bool, default=True</em>) &#8211; If blockAn is True the algorithm perform a block analysis that allows discriminating the relevant dimensions
+as a function of the block size. This allows to study the stability of the estimation with respect to
+changes in the neighborhood size, which is crucial for ID estimations when the data lie on a manifold perturbed
+by a high-dimensional noise.</li>
+<li><strong>block_ratio</strong> (<em>int, default=20</em>) &#8211; Set the minimum size of the blocks as <cite>n_samples/block_ratio</cite>. If <code class="docutils literal"><span class="pre">blockAn=False</span></code>, block_ratio is ignored.</li>
+<li><strong>frac</strong> (<em>float, default=1</em>) &#8211; Define the fraction of points in the data set used for ID calculation. By default the full data set is used.</li>
+</ul>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+</div>
+
+
+          </div>
+          
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+  <h3><a href="index.html">Table Of Contents</a></h3>
+  <ul>
+<li><a class="reference internal" href="#">Pipeline.DPA module</a></li>
+<li><a class="reference internal" href="#pipeline-pak-module">Pipeline.PAk module</a></li>
+<li><a class="reference internal" href="#pipeline-twonn-module">Pipeline.twoNN module</a></li>
+</ul>
+<div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="index.html">Documentation overview</a><ul>
+  </ul></li>
+</ul>
+</div>
+  <div role="note" aria-label="source link">
+    <h3>This Page</h3>
+    <ul class="this-page-menu">
+      <li><a href="_sources/Pipeline.rst.txt"
+            rel="nofollow">Show Source</a></li>
+    </ul>
+   </div>
+<div id="searchbox" style="display: none" role="search">
+  <h3>Quick search</h3>
+    <form class="search" action="search.html" method="get">
+      <div><input type="text" name="q" /></div>
+      <div><input type="submit" value="Go" /></div>
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &copy;2019, Maria d'Errico.
+      
+      |
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 1.5.6</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.12</a>
+      
+      |
+      <a href="_sources/Pipeline.rst.txt"
+          rel="nofollow">Page source</a>
+    </div>
+
+    
+
+    
+  </body>
+</html>
