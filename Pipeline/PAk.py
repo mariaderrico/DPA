@@ -129,6 +129,16 @@ class PointAdaptive_kNN(BaseEstimator, DensityMixin):
     Attributes
     ----------
 
+    dim_ : int, 
+        Intrinsic dimensionality of the sample. If ``dim`` is not provided, ``dim_`` is set 
+        to the number of features in the input file.
+
+    k_max_ : int
+        The maximum number of nearest-neighbors considered by the procedure that returns the
+        largest number of neighbors ``k_hat`` for which the condition of constant density
+        holds, within a given level of confidence. If the number of points in the sample `N` is
+        less than the default value, k_max_ will be set automatically to the value ``N/2``.
+
     distances_ : array [n_samples, k_max+1]
         Distances to the k_max neighbors of each points.
 
@@ -223,38 +233,40 @@ class PointAdaptive_kNN(BaseEstimator, DensityMixin):
         # Input validation
         X = check_array(X, order='C', accept_sparse=True)
 
+        self.dim_ = self.dim
         if not self.dim:
             if self.dim_algo == "auto":
-                self.dim = X.shape[1]
+                self.dim_ = X.shape[1]
             elif self.dim_algo == "twoNN":
                 if self.block_ratio >= X.shape[0]:
                     raise ValueError("block_ratio is larger than the sample size, the minimum size for block analysis \
                                 would be zero. Please set a lower value.")
-                self.dim = twoNearestNeighbors(blockAn=self.blockAn, block_ratio=self.block_ratio, 
+                self.dim_ = twoNearestNeighbors(blockAn=self.blockAn, block_ratio=self.block_ratio, 
                                                frac=self.frac, n_jobs=self.n_jobs).fit(X).dim_
             else:
                 pass
 
+        self.k_max_ = self.k_max
         if self.k_max > X.shape[0]:
-            self.k_max = int(X.shape[0]/2)
+            self.k_max_ = int(X.shape[0]/2)
         if self.k_max < 3:
             raise ValueError("k_max is below 3, the minimum value required for \
                         statistical significance. Please use a larger datasets.")
 
         # check if NN matrix is precomputed:
         if self.nn_distances is not None and self.nn_indices is not None:
-            # overwrite the self.k_max
-            self.k_max = self.nn_distances.shape[1]-1
+            # overwrite the self.k_max_
+            self.k_max_ = self.nn_distances.shape[1]-1
             self.distances_ = self.nn_distances
             self.indices_ = self.nn_indices
         elif self.metric == "precomputed":
-            nbrs = NearestNeighbors(n_neighbors=self.k_max+1, # The point i is counted in its neighborhood 
+            nbrs = NearestNeighbors(n_neighbors=self.k_max_+1, # The point i is counted in its neighborhood 
                                           algorithm="brute", 
                                         metric=self.metric,
                                         n_jobs=self.n_jobs).fit(X)
             self.distances_, self.indices_ = nbrs.kneighbors(X)
         else:
-            nbrs = NearestNeighbors(n_neighbors=self.k_max+1, # The point i is counted in its neighborhood 
+            nbrs = NearestNeighbors(n_neighbors=self.k_max_+1, # The point i is counted in its neighborhood 
                                          algorithm="auto", 
                                         metric=self.metric, 
                                         n_jobs=self.n_jobs).fit(X)
@@ -263,9 +275,9 @@ class PointAdaptive_kNN(BaseEstimator, DensityMixin):
         
         self.densities_, self.err_densities_, self.k_hat_, self.dc_ = _PointAdaptive_kNN(self.distances_, 
                                                                                  self.indices_,
-                                                                              k_max=self.k_max, 
+                                                                              k_max=self.k_max_, 
                                                                               D_thr=self.D_thr, 
-                                                                                  dim=self.dim)
+                                                                                  dim=self.dim_)
         self.is_fitted_ = True
 
         return self
