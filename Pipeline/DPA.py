@@ -232,11 +232,28 @@ class DensityPeakAdvanced(BaseEstimator, DensityMixin):
     indices_ : array [n_samples, k_max+1]
         Indices of the k_max neighbors of each points. The point itself is included in the array.
  
-    k_hat_ : array [n_samples], default = None
+    k_hat_ : array [n_samples]
         The optimal number of neighbors for which the condition of constant density holds.
 
     centers_ :array [Nclus]
         The clustering labels assigned to each point in the data set.
+
+    dim_ : int, 
+        Intrinsic dimensionality of the sample. If ``dim`` is not provided, ``dim_`` is set 
+        to the number of features in the input file.
+
+    k_max_ : int
+        The maximum number of nearest-neighbors considered by the procedure that returns the
+        largest number of neighbors ``k_hat`` for which the condition of constant density
+        holds, within a given level of confidence. If the number of points in the sample `N` is
+        less than the default value, k_max_ will be set automatically to the value ``N/2``.
+
+    densities_ : array [n_samples]
+        If not provided by the parameter ``densities``, it is computed by using the `PAk` density estimator. 
+
+    err_densities_ : array [n_samples]
+        The uncertainty in the density estimation. If not provided by the parameter ``densities``, it is 
+        computed by using the `PAk` density estimator. 
 
     Example
     -------
@@ -310,7 +327,6 @@ class DensityPeakAdvanced(BaseEstimator, DensityMixin):
             Returns self.
         """
         # Input validation
-        #X = check_array(X, order='C', accept_sparse=True)
         X = check_array(X, accept_sparse=['csr', 'csc', 'coo'],
                         dtype=np.float64, ensure_min_samples=2)
 
@@ -322,17 +338,16 @@ class DensityPeakAdvanced(BaseEstimator, DensityMixin):
                           " a custom affinity matrix, "
                           "set ``affinity=precomputed``.")
 
-        if self.affinity == 'precomputed':
-            self.affinity_matrix_ = X
-
+        self.k_max_ = self.k_max
+        self.dim_ = self.dim
         if not self.dim:
             if self.dim_algo == "auto":
-                self.dim = X.shape[1]
+                self.dim_ = X.shape[1]
             elif self.dim_algo == "twoNN":
                 if self.block_ratio >= X.shape[0]:
                     raise ValueError("block_ratio is larger than the sample size, the minimum size for \
                                       block analysis would be zero. Please set a value lower than "+str(X.shape[0]))
-                self.dim = twoNearestNeighbors(blockAn=self.blockAn, block_ratio=self.block_ratio, 
+                self.dim_ = twoNearestNeighbors(blockAn=self.blockAn, block_ratio=self.block_ratio, 
                                                frac=self.frac, n_jobs=self.n_jobs).fit(X).dim_
             else:
                 pass
@@ -341,21 +356,24 @@ class DensityPeakAdvanced(BaseEstimator, DensityMixin):
             
         # If densities, uncertainties and k_hat are provided as input, compute only the
         # matrix of nearest neighbor: 
+        self.densities_ = self.densities
+        self.err_densities_ = self.err_densities
+        self.k_hat_ = self.k_hat
         if self.densities is not None and self.err_densities is not None and self.k_hat is not None:
             # If the nearest neighbors matrix is precomputed:
             if self.nn_distances is not None and self.nn_indices is not None:
-                self.k_max = max(self.k_hat) 
+                self.k_max_ = max(self.k_hat_) 
                 self.distances_ = self.nn_distances
                 self.indices_ = self.nn_indices
             else:
-                self.k_max = max(self.k_hat)
+                self.k_max = max(self.k_hat_)
                 if self.metric == "precomputed":
-                    nbrs = NearestNeighbors(n_neighbors=self.k_max+1, # The point i is counted in its neighborhood 
+                    nbrs = NearestNeighbors(n_neighbors=self.k_max_+1, # The point i is counted in its neighborhood 
                                                   algorithm="brute", 
                                                 metric=self.metric,
                                                 n_jobs=self.n_jobs).fit(X)
                 else:
-                    nbrs = NearestNeighbors(n_neighbors=self.k_max+1, # The point i is counted in its neighborhood 
+                    nbrs = NearestNeighbors(n_neighbors=self.k_max_+1, # The point i is counted in its neighborhood 
                                                  algorithm="auto", 
                                                 metric=self.metric, 
                                                 n_jobs=self.n_jobs).fit(X)
@@ -363,29 +381,29 @@ class DensityPeakAdvanced(BaseEstimator, DensityMixin):
         elif self.density_algo == "PAk":
             # If the nearest neighbors matrix is precomputed:
             if self.nn_distances is not None and self.nn_indices is not None:
-                self.k_max = self.nn_distances.shape[1]-1
-                PAk = PointAdaptive_kNN(k_max=self.k_max, D_thr=self.D_thr, metric=self.metric,
+                self.k_max_ = self.nn_distances.shape[1]-1
+                PAk = PointAdaptive_kNN(k_max=self.k_max_, D_thr=self.D_thr, metric=self.metric,
                                                    nn_distances=self.nn_distances, nn_indices=self.nn_indices,
                                                    dim_algo=self.dim_algo, blockAn=self.blockAn,
                                                    block_ratio=self.block_ratio,
-                                                   frac=self.frac, dim=self.dim, n_jobs=self.n_jobs).fit(X)
+                                                   frac=self.frac, dim=self.dim_, n_jobs=self.n_jobs).fit(X)
             else:
-                PAk = PointAdaptive_kNN(k_max=self.k_max, D_thr=self.D_thr, metric=self.metric, 
+                PAk = PointAdaptive_kNN(k_max=self.k_max_, D_thr=self.D_thr, metric=self.metric, 
                                                    dim_algo=self.dim_algo, blockAn=self.blockAn, 
                                                    block_ratio=self.block_ratio,
-                                                   frac=self.frac, dim=self.dim, n_jobs=self.n_jobs).fit(X)
+                                                   frac=self.frac, dim=self.dim_, n_jobs=self.n_jobs).fit(X)
             self.distances_ = PAk.distances_
             self.indices_ = PAk.indices_ 
-            self.densities = PAk.densities_
-            self.err_densities = PAk.err_densities_
-            self.k_hat = PAk.k_hat_
-            self.k_max = max(self.k_hat)
+            self.densities_ = PAk.densities_
+            self.err_densities_ = PAk.err_densities_
+            self.k_hat_ = PAk.k_hat_
+            self.k_max_ = max(self.k_hat_)
         else:
             # TODO: implement option for kNN
             pass
         
-        self.labels_, self.halos_, self.topography_, self.g_, self.centers_ = _DensityPeakAdvanced(self.densities, 
-                                                              self.err_densities, self.k_hat,
+        self.labels_, self.halos_, self.topography_, self.g_, self.centers_ = _DensityPeakAdvanced(self.densities_, 
+                                                              self.err_densities_, self.k_hat_,
                                                               self.distances_, self.indices_, self.Z)
                                                               
 
