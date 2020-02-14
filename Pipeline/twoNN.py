@@ -109,6 +109,19 @@ class twoNearestNeighbors(BaseEstimator, DensityMixin):
         ``-1`` means using all processors. See :term:`Glossary <n_jobs>`
         for more details.
 
+    affinity : string or callable, default 'precomputed'
+        How to construct the affinity matrix.
+         - ``nearest_neighbors`` : construct the affinity matrix by computing a
+           graph of nearest neighbors.
+         - ``rbf`` : construct the affinity matrix using a radial basis function
+           (RBF) kernel.
+         - ``precomputed`` : interpret ``X`` as a precomputed affinity matrix.
+         - ``precomputed_nearest_neighbors`` : interpret ``X`` as a sparse graph
+           of precomputed nearest neighbors, and constructs the affinity matrix
+           by selecting the ``n_neighbors`` nearest neighbors.
+         - one of the kernels supported by
+           :func:`~sklearn.metrics.pairwise_kernels`.
+
     Attributes
     ----------
     dim_ : int
@@ -122,12 +135,13 @@ class twoNearestNeighbors(BaseEstimator, DensityMixin):
 
 
     """
-    def __init__(self, metric='euclidean',  blockAn=True, block_ratio=20, frac=1, n_jobs=None):
+    def __init__(self, metric='euclidean',  blockAn=True, block_ratio=20, frac=1, n_jobs=None, affinity="precomputed"):
         self.metric = 'euclidean'
         self.blockAn = blockAn
         self.block_ratio = block_ratio
         self.frac = frac
         self.n_jobs = n_jobs
+        self.affinity = affinity
 
         if self.frac > 1:
             raise ValueError("frac should be between 0 and 1.")
@@ -140,7 +154,8 @@ class twoNearestNeighbors(BaseEstimator, DensityMixin):
         ----------
         X : array [n_samples, n_samples] if metric == ``precomputed``, or,
             [n_samples, n_features] otherwise
-            The input samples.
+            The input samples. Similarities / affinities between
+            instances if ``affinity='precomputed'``. 
 
         y : Ignored
             Not used, present here for API consistency by convention.
@@ -151,14 +166,24 @@ class twoNearestNeighbors(BaseEstimator, DensityMixin):
             Returns self.
         """
         # Input validation
-        X = check_array(X, order='C', accept_sparse=True)
+        X = check_array(X, accept_sparse=['csr', 'csc', 'coo'],
+                        dtype=np.float64, ensure_min_samples=2)
 
-        if self.block_ratio >= X.shape[0]:
-             # TOBE implemented
-             pass
-             #raise ValueError("block_ratio is larger than the sample size, the minimum size for block analysis \
-             #           would be zero. Please set a lower value.")
+        allow_squared = self.affinity in ["precomputed",
+                                          "precomputed_nearest_neighbors"]
+        if X.shape[0] == X.shape[1] and not allow_squared:
+            warnings.warn("The twoNN API has changed. ``fit``"
+                          "now constructs an affinity matrix from data. To use"
+                          " a custom affinity matrix, "
+                          "set ``affinity=precomputed``.")
 
+
+        #if self.block_ratio >= X.shape[0]:
+        #     # TOBE implemented
+        #     pass
+        #     #raise ValueError("block_ratio is larger than the sample size, the minimum size for block analysis \
+        #     #           would be zero. Please set a lower value.")
+        
         if self.metric == "precomputed":
             # TODO: handle identical distances
             nbrs = NearestNeighbors(n_neighbors=3, # Only two neighbors used; the point i is counted in its neighborhood
@@ -167,7 +192,8 @@ class twoNearestNeighbors(BaseEstimator, DensityMixin):
                                         n_jobs=self.n_jobs).fit(X)
         else:
             # Remove duplicates coordinates
-            X = np.unique(X, axis=0)
+            if len(X)>0:
+                X = np.unique(X, axis=0)
             nbrs = NearestNeighbors(n_neighbors=3, # Only two neighbors used; the point i is counted in its neighborhood
                                          algorithm="auto",
                                         metric=self.metric, 
