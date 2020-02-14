@@ -154,8 +154,10 @@ class twoNearestNeighbors(BaseEstimator, DensityMixin):
         X = check_array(X, order='C', accept_sparse=True)
 
         if self.block_ratio >= X.shape[0]:
-            raise ValueError("block_ratio is larger than the sample size, the minimum size for block analysis \
-                        would be zero. Please set a lower value.")
+             # TOBE implemented
+             pass
+             #raise ValueError("block_ratio is larger than the sample size, the minimum size for block analysis \
+             #           would be zero. Please set a lower value.")
 
         if self.metric == "precomputed":
             # TODO: handle identical distances
