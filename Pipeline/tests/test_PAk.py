@@ -68,10 +68,10 @@ def test_PointAdaptive_kNN(data_Fig1, output_Fig1_test3):
     assert len(data_Fig1) == len(est.densities_)
 
     df_bm = output_Fig1_test3
-    is_almost_equal(est.densities_, df_bm['rho'].values, 0.07, 2)
-    is_almost_equal(est.err_densities_, df_bm['rho_err'].values, 0.05, 3)
-    is_almost_equal(est.dc_, df_bm['dc'].values, 0.05, 3)
-    is_almost_equal(est.k_hat_, df_bm['k_hat'].values, 0.05, 0)
+    is_almost_equal(est.densities_, df_bm['rho'].values, 0.011, 2)
+    is_almost_equal(est.err_densities_, df_bm['rho_err'].values, 0.0, 3)
+    is_almost_equal(est.dc_, df_bm['dc'].values, 0.0, 3)
+    is_almost_equal(est.k_hat_, df_bm['k_hat'].values, 0.0, 0)
 
     df_results = pd.DataFrame(index=range(0,len(est.densities_)), columns=["rho","rho_err","k_hat","dc"])
     df_results["rho"] = est.densities_

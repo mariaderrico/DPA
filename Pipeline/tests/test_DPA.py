@@ -71,7 +71,7 @@ def test_PointAdaptive_kNN(data_Fig1, output_Fig1_labels, output_Fig1_labelsHalo
     assert len(data_Fig1) == len(est.densities)
     
     assert_array_equal(est.labels_, [c-1 for c in output_Fig1_labels["clu"]])
-    is_almost_equal(est.halos_, [c-1 for c in output_Fig1_labelsHalos["clu"]], 0.01, 0)
+    is_almost_equal(est.halos_, [c-1 for c in output_Fig1_labelsHalos["clu"]], 0.0, 0)
     #assert_array_equal(est.halos_, output_Fig1_labelsHalos["clu"])
 
     assert_array_equal([est.topography_[i][0]+1 for i in range(len(est.topography_))], output_Fig1_borders["i"])
