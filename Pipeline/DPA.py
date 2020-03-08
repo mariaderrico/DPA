@@ -329,7 +329,7 @@ class DensityPeakAdvanced(BaseEstimator, DensityMixin):
         # Input validation
         X = check_array(X, accept_sparse=['csr', 'csc', 'coo'],
                         dtype=np.float64, ensure_min_samples=2)
-
+        
         allow_squared = self.affinity in ["precomputed",
                                           "precomputed_nearest_neighbors"]
         if X.shape[0] == X.shape[1] and not allow_squared:
@@ -338,6 +338,7 @@ class DensityPeakAdvanced(BaseEstimator, DensityMixin):
                           " a custom affinity matrix, "
                           "set ``affinity=precomputed``.")
 
+        
         self.k_max_ = self.k_max
         self.dim_ = self.dim
         if not self.dim:
@@ -412,18 +413,12 @@ class DensityPeakAdvanced(BaseEstimator, DensityMixin):
 
 
     def get_params(self, deep=True):
-        # suppose this estimator has parameters "alpha" and "recursive"
-        # Z=1, metric="euclidean", densities=None, err_densities=None, k_hat=None,
-        #              nn_distances=None, nn_indices=None,
-        #              density_algo="PAk", k_max=1000, D_thr=23.92812698, dim=None, dim_algo="twoNN",
-        #               blockAn=True, block_ratio=20, frac=1, n_jobs=None
         return {"Z": self.Z, "metric": self.metric, "densities": self.densities,
                 "err_densities": self.err_densities, "k_hat": self.k_hat, "nn_distances": self.nn_distances,
-                "nn_indices": self.nn_indices, "density_algo": self.density_algo, "k_max":self.k_max, "D_thr": self.D_thr,
+                "nn_indices": self.nn_indices, "affinity": self.affinity, "density_algo": self.density_algo, 
+                "k_max":self.k_max, "D_thr": self.D_thr,
                 "dim": self.dim, "dim_algo": self.dim_algo, "blockAn": self.blockAn, "block_ratio": self.block_ratio,
                 "frac": self.frac, "n_jobs": self.n_jobs}
-        #return {"Z": self.Z, "metric": self.metric, "density_algo": self.density_algo, "k_max":self.k_max,
-        #        "dim": self.dim, "dim_algo": self.dim_algo} 
     
     def set_params(self, **parameters):
         for parameter, value in parameters.items():
