@@ -67,8 +67,9 @@ def test_PointAdaptive_kNN(data_Fig1, output_Fig1_labels, output_Fig1_labelsHalo
     est.fit(data_Fig1)
     assert hasattr(est, 'is_fitted_')
 
-    assert est.k_max == max(est.k_hat)
-    assert len(data_Fig1) == len(est.densities)
+    assert est.k_max_ == max(est.k_hat_)
+    print(len(data_Fig1), len(est.densities_))
+    assert len(data_Fig1) == len(est.densities_)
     
     assert_array_equal(est.labels_, [c-1 for c in output_Fig1_labels["clu"]])
     is_almost_equal(est.halos_, [c-1 for c in output_Fig1_labelsHalos["clu"]], 0.0, 0)
