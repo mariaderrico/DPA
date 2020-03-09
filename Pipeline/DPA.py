@@ -367,7 +367,7 @@ class DensityPeakAdvanced(BaseEstimator, DensityMixin):
                 self.distances_ = self.nn_distances
                 self.indices_ = self.nn_indices
             else:
-                self.k_max = max(self.k_hat_)
+                self.k_max_ = max(self.k_hat_)
                 if self.metric == "precomputed":
                     nbrs = NearestNeighbors(n_neighbors=self.k_max_+1, # The point i is counted in its neighborhood 
                                                   algorithm="brute", 
