@@ -15,6 +15,12 @@ cimport cython
 DBL_MIN = sys.float_info.min
 DBL_MAX = sys.float_info.max
 
+def get_volume(V1, dist, dim):
+    # Check if the distance is not zero and return the corresponding volume
+    if dist > 0:
+        return V1*exp(dim*(log(dist)))
+    else:
+        return 0
 
 def ratio_test(i, N, V1, V_dic, dim, distances, k_max, D_thr, indices):
     # Compute the volume of the dim-sphere with unitary radius
@@ -23,9 +29,9 @@ def ratio_test(i, N, V1, V_dic, dim, distances, k_max, D_thr, indices):
     # Volumes are stored in V_dic dictionary to avoid double computations
     if i not in V_dic.keys():
         V_dic[i] = [-1]*k_max
-        V_dic[i][0] = V1*exp(dim*log(distances[i][1]))
-        V_dic[i][1] = V1*exp(dim*log(distances[i][2]))
-        V_dic[i][2] = V1*exp(dim*log(distances[i][3]))
+        V_dic[i][0] = get_volume(V1, distances[i][1], dim)
+        V_dic[i][1] = get_volume(V1, distances[i][2], dim)
+        V_dic[i][2] = get_volume(V1, distances[i][3], dim)
     k = 3 # Minimum number of neighbors required
     Dk = 0
     # Stop when the k+1-th neighbors has a significantly different density from point i 
@@ -35,13 +41,13 @@ def ratio_test(i, N, V1, V_dic, dim, distances, k_max, D_thr, indices):
             vi = V_dic[i][k-1]
         elif i not in V_dic.keys():
             V_dic[i] = [-1]*k_max
-            V_dic[i][0] = V1*exp(dim*log(distances[i][1]))
-            V_dic[i][1] = V1*exp(dim*log(distances[i][2]))
-            V_dic[i][2] = V1*exp(dim*log(distances[i][3]))
-            V_dic[i][k-1] = V1*exp(dim*log(distances[i][k]))
+            V_dic[i][0] = get_volume(V1, distances[i][1], dim)
+            V_dic[i][1] = get_volume(V1, distances[i][2], dim)
+            V_dic[i][2] = get_volume(V1, distances[i][3], dim)
+            V_dic[i][k-1] = get_volume(V1, distances[i][k], dim)
             vi = V_dic[i][k-1]
         else:
-            V_dic[i][k-1] = V1*exp(dim*log(distances[i][k]))
+            V_dic[i][k-1] = get_volume(V1, distances[i][k], dim)
             vi = V_dic[i][k-1]
         # Check on the k+1-th neighbor of i
         j = indices[i][k+1]
@@ -49,16 +55,19 @@ def ratio_test(i, N, V1, V_dic, dim, distances, k_max, D_thr, indices):
             vj = V_dic[j][k-1]
         elif j not in V_dic.keys():
             V_dic[j] = [-1]*k_max
-            V_dic[j][0] = V1*exp(dim*log(distances[j][1]))
-            V_dic[j][1] = V1*exp(dim*log(distances[j][2]))
-            V_dic[j][2] = V1*exp(dim*log(distances[j][3]))
-            V_dic[j][k-1] = V1*exp(dim*log(distances[j][k]))
+            V_dic[j][0] = get_volume(V1, distances[j][1], dim)
+            V_dic[j][1] = get_volume(V1, distances[j][2], dim)
+            V_dic[j][2] = get_volume(V1, distances[j][3], dim)
+            V_dic[j][k-1] = get_volume(V1, distances[j][k], dim)
             vj = V_dic[j][k-1]
         else:
-            V_dic[j][k-1] = V1*exp(dim*log(distances[j][k]))
+            V_dic[j][k-1] = get_volume(V1, distances[j][k], dim)
             vj = V_dic[j][k-1]
-
-        Dk = -2.*k*(log(vi)+log(vj)-2.*log(vi+vj)+log(4.))
+        # In case of identical points vi and/or vj are set to zero
+        if vi>0 and vj>0:
+            Dk = -2.*k*(log(vi)+log(vj)-2.*log(vi+vj)+log(4.))
+        else:
+            pass
         k += 1
     V_dic[i][k-1] = V1*exp(dim*log(distances[i][k]))
     return k, distances[i][k-1], V_dic
