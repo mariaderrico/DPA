@@ -231,7 +231,8 @@ class PointAdaptive_kNN(BaseEstimator, DensityMixin):
             Returns self.
         """
         # Input validation
-        X = check_array(X, order='C', accept_sparse=True)
+        X = check_array(X, accept_sparse=['csr', 'csc', 'coo'],
+                        dtype=np.float64, ensure_min_samples=2)
 
         self.dim_ = self.dim
         if not self.dim:
@@ -272,7 +273,6 @@ class PointAdaptive_kNN(BaseEstimator, DensityMixin):
                                         n_jobs=self.n_jobs).fit(X)
             self.distances_, self.indices_ = nbrs.kneighbors(X) 
 
-        
         self.densities_, self.err_densities_, self.k_hat_, self.dc_ = _PointAdaptive_kNN(self.distances_, 
                                                                                  self.indices_,
                                                                               k_max=self.k_max_, 
