@@ -60,7 +60,7 @@ def get_borders( N, k_hat, indices, clu_labels, Nclus, g, densities, err_densiti
 
     # Criterion 1 from Heuristic 2:
     # point i belonging to c is at the border if its closest point j belonging to c′ is 
-    #within a distance k_hat[i] 
+    # within a distance k_hat[i] 
     for i in range(0,N):
         for k in range(0,k_hat[i]):
             j = indices[i][k+1]
@@ -73,6 +73,7 @@ def get_borders( N, k_hat, indices, clu_labels, Nclus, g, densities, err_densiti
                     border_dict[(i, clu_labels[i])][clu_labels[j]] = j
                     break
                 else:
+                    # There is already a point belonging to cluster clu_labels[j], which is closest to i
                     break
 
     # Criterion 2 from Heuristic 2:
@@ -81,7 +82,7 @@ def get_borders( N, k_hat, indices, clu_labels, Nclus, g, densities, err_densiti
         for cp in range(Nclus):
             j = border_dict[(i,c)][cp]
             if j!=-1:
-                for k in range(0,1000):
+                for k in range(0,max(k_hat)): 
                     z = indices[j][k+1]
                     if z == i:
                         m_c = min(c,cp)
