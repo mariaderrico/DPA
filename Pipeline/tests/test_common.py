@@ -12,13 +12,6 @@ from sklearn.utils.estimator_checks import (
 from Pipeline.DPA import PointAdaptive_kNN
 from Pipeline.DPA import twoNearestNeighbors
 from Pipeline.DPA import DensityPeakAdvanced
-#from DPA import NR
-
-@pytest.mark.parametrize(
-    "Estimator", [DensityPeakAdvanced, PointAdaptive_kNN, twoNearestNeighbors] 
-)
-def test_all_estimators(Estimator):
-    return check_estimator(Estimator)
 
 @parametrize_with_checks([DensityPeakAdvanced, PointAdaptive_kNN, twoNearestNeighbors])
 def test_scikitlearn_compatible_estimator(estimator, check):
