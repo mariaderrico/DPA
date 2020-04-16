@@ -7,7 +7,7 @@
 # Licence: BSD 3 clause
 
 import numpy as np
-from sklearn.base import BaseEstimator, DensityMixin, ClassifierMixin, TransformerMixin
+from sklearn.base import BaseEstimator, ClusterMixin, DensityMixin, ClassifierMixin, TransformerMixin
 from sklearn.utils.validation import check_X_y, check_array, check_is_fitted
 from sklearn.utils.multiclass import unique_labels
 from sklearn.metrics import euclidean_distances
@@ -109,7 +109,7 @@ def _DensityPeakAdvanced(densities, err_densities, k_hat, distances, indices, Z)
     return labels, halos, topography, g, centers_m
 
    
-class DensityPeakAdvanced(BaseEstimator, DensityMixin):
+class DensityPeakAdvanced(ClusterMixin, BaseEstimator): 
     """Class definition for the non-parametric Density Peak clustering.
 
     The default pipeline makes use of the `PAk` density estimator and of the `TWO-NN` intristic dimension estimator.
@@ -360,7 +360,7 @@ class DensityPeakAdvanced(BaseEstimator, DensityMixin):
         self.densities_ = self.densities
         self.err_densities_ = self.err_densities
         self.k_hat_ = self.k_hat
-        if self.densities is not None and self.err_densities is not None and self.k_hat is not None:
+        if self.densities_ is not None and self.err_densities_ is not None and self.k_hat_ is not None:
             # If the nearest neighbors matrix is precomputed:
             if self.nn_distances is not None and self.nn_indices is not None:
                 self.k_max_ = max(self.k_hat_) 
@@ -402,16 +402,37 @@ class DensityPeakAdvanced(BaseEstimator, DensityMixin):
         else:
             # TODO: implement option for kNN
             pass
-        
         self.labels_, self.halos_, self.topography_, self.g_, self.centers_ = _DensityPeakAdvanced(self.densities_, 
-                                                              self.err_densities_, self.k_hat_,
+                                                              self.err_densities_, self.k_hat_, 
                                                               self.distances_, self.indices_, self.Z)
                                                               
 
         self.is_fitted_ = True
+        
         return self
 
 
+    def fit_predict(self, X, y=None):
+        """Perform DPA clustering from features or distance matrix,
+        and return cluster labels.
+        Parameters
+        ----------
+        X : array-like or sparse matrix, shape (n_samples, n_features), or \
+            (n_samples, n_samples)
+            Training instances to cluster, or distances between instances if
+            ``metric='precomputed'``. If a sparse matrix is provided, it will
+            be converted into a sparse ``csr_matrix``.
+        y : Ignored
+            Not used, present here for API consistency by convention.
+        Returns
+        -------
+        labels : ndarray, shape (n_samples,)
+            Cluster labels. Noisy samples are given the label -1.
+        """
+        self.fit(X)
+        return self.labels_
+
+"""
     def get_params(self, deep=True):
         return {"Z": self.Z, "metric": self.metric, "densities": self.densities,
                 "err_densities": self.err_densities, "k_hat": self.k_hat, "nn_distances": self.nn_distances,
@@ -424,4 +445,4 @@ class DensityPeakAdvanced(BaseEstimator, DensityMixin):
         for parameter, value in parameters.items():
             setattr(self, parameter, value)
         return self
-
+"""

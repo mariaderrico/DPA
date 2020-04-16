@@ -72,7 +72,7 @@ def _twoNearestNeighbors(distances, blockAn=True, block_ratio=20, frac=1):
 
 
 
-class twoNearestNeighbors(BaseEstimator, DensityMixin):
+class twoNearestNeighbors(BaseEstimator): 
     """Class definition for TWO-NN: Intrinsic dimension estimator by a minimal neighborhood information.
 
     The TWO-NN estimator uses only the distances to the first two nearest neighbors of each point.

@@ -66,7 +66,7 @@ def _PointAdaptive_kNN(distances, indices, k_max=1000, D_thr=23.92812698, dim=No
     return densities, err_densities, k_hat, dc
 
 
-class PointAdaptive_kNN(BaseEstimator, DensityMixin):
+class PointAdaptive_kNN(BaseEstimator): 
     """Class definition for the Pointwise Adaptive k-NN density estimator.
 
     Parameters
