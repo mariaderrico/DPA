@@ -14,7 +14,7 @@ from sklearn.neighbors import NearestNeighbors
 from math import log, sqrt, exp, lgamma, pi, pow
 from sklearn.linear_model import LinearRegression
 
-VALID_METRIC = ['precomputed', 'euclidean']
+VALID_METRIC = ['precomputed', 'euclidean','cosine']
 
 def _twoNearestNeighbors(distances, blockAn=True, block_ratio=20, frac=1):
     """Main function for the TWO-NN estimator.
@@ -84,7 +84,7 @@ class twoNearestNeighbors(BaseEstimator):
         The distance metric to use. 
         If metric is a string, it must be one of the options allowed by 
         scipy.spatial.distance.pdist for its metric parameter, or a metric listed in 
-        :obj:`VALID_METRIC = [precomputed, euclidean]`. If metric is ``precomputed``, X is assumed to
+        :obj:`VALID_METRIC = [precomputed, euclidean,cosine]`. If metric is ``precomputed``, X is assumed to
         be a distance matrix. Alternatively, if metric is a callable function, it is 
         called on each pair of instances (rows) and the resulting value recorded. The 
         callable should take two arrays from X as input and return a value indicating 

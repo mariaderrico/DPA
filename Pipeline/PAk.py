@@ -15,7 +15,7 @@ from math import log, sqrt, exp, lgamma, pi, pow
 from Pipeline.twoNN import twoNearestNeighbors
 from Pipeline import _PAk
 
-VALID_METRIC = ['precomputed', 'euclidean']
+VALID_METRIC = ['precomputed', 'euclidean','cosine']
 VALID_DIM = ['auto', 'twoNN']
 
 def _PointAdaptive_kNN(distances, indices, k_max=1000, D_thr=23.92812698, dim=None):
@@ -85,7 +85,7 @@ class PointAdaptive_kNN(BaseEstimator):
         The distance metric to use. 
         If metric is a string, it must be one of the options allowed by 
         scipy.spatial.distance.pdist for its metric parameter, or a metric listed in 
-        :obj:`VALID_METRIC = [precomputed, euclidean]`. If metric is ``precomputed``, X is assumed to
+        :obj:`VALID_METRIC = [precomputed, euclidean,cosine]`. If metric is ``precomputed``, X is assumed to
         be a distance matrix. Alternatively, if metric is a callable function, it is 
         called on each pair of instances (rows) and the resulting value recorded. The 
         callable should take two arrays from X as input and return a value indicating 
@@ -242,7 +242,7 @@ class PointAdaptive_kNN(BaseEstimator):
                 if self.block_ratio >= X.shape[0]:
                     raise ValueError("block_ratio is larger than the sample size, the minimum size for block analysis \
                                 would be zero. Please set a lower value.")
-                self.dim_ = twoNearestNeighbors(blockAn=self.blockAn, block_ratio=self.block_ratio, 
+                self.dim_ = twoNearestNeighbors(blockAn=self.blockAn, block_ratio=self.block_ratio, metric=self.metric,
                                                frac=self.frac, n_jobs=self.n_jobs).fit(X).dim_
             else:
                 pass
