@@ -3,6 +3,7 @@ import scipy as sp
 from scipy import stats
 from sklearn.neighbors import NearestNeighbors
 class Density_Peaks_clustering:
+
     def __init__(self,distances=None,indices=None,dens_type="eps",dc=None,percent=2.0):
         self.distances = distances
         self.indices = indices
@@ -18,6 +19,9 @@ class Density_Peaks_clustering:
         self.cluster = None
         self.centers = None
         self.halo = None
+        self.gamma_cut = None
+        self.gamma = None
+
     def get_dc(self,data):
         Nele=data.shape[0]
         n_neigh=int(self.percent/100.*Nele)
@@ -41,6 +45,7 @@ class Density_Peaks_clustering:
                 factor=factor*1.001
             tt=abs(tt)
         self.dc=dc
+
     def get_decision_graph(self,data):
         Nele=data.shape[0]
         self.dens=np.zeros(Nele)
@@ -76,6 +81,7 @@ class Density_Peaks_clustering:
                 self.delta[i]=-100.
                 imax.append(i)
         self.delta[imax]=np.max(self.delta)*1.05
+
     def get_assignation(self,data):
         ordered=np.argsort(-self.dens)
         self.cluster=np.zeros(data.shape[0],dtype='int')
@@ -101,6 +107,41 @@ class Density_Peaks_clustering:
                     bord[i]=1
         halo_cutoff=np.zeros(ncluster+1)
         for i in range (ncluster+1):
-            dd=self.dens[((bord==1)&(self.cluster==i))]
-            halo_cutoff[i]=np.max(dd)
+            td=self.dens[((bord==1)&(self.cluster==i))]
+            if (td.size != 0):
+                halo_cutoff[i]=np.max(td)
+        self.halo[tt[(self.dens<halo_cutoff[self.cluster])]]=-1
+
+    def get_assignation_gamma(self,data):
+        self.get_decision_graph(data) 
+        self.gamma=self.delta*self.dens
+        g_order = np.argsort(-self.gamma)
+        g_ranks = np.argsort(g_order)
+        ordered=np.argsort(-self.dens)
+        self.cluster=np.zeros(data.shape[0],dtype='int')
+        tt=np.arange(data.shape[0])
+        center_label=np.zeros(data.shape[0],dtype='int')
+        ncluster=-1
+        for i in range(data.shape[0]):
+            j=ordered[i]
+            if (g_ranks[j]<self.gamma_cut):
+                ncluster=ncluster+1
+                self.cluster[j]=ncluster
+                center_label[j]=ncluster
+            else:
+                self.cluster[j]=self.cluster[self.ref[j]]
+                center_label[j]=-1
+        self.centers=tt[(center_label!=-1)]
+        bord=np.zeros(data.shape[0],dtype='int')
+        self.halo=np.copy(self.cluster)
+
+        for i in range(data.shape[0]):
+            for j in self.indices[i,:][(self.distances[i,:]<=self.dc)]:
+                if (self.cluster[i]!=self.cluster[j]):
+                    bord[i]=1
+        halo_cutoff=np.zeros(ncluster+1)
+        for i in range (ncluster+1):
+            td=self.dens[((bord==1)&(self.cluster==i))]
+            if (td.size != 0):
+                halo_cutoff[i]=np.max(td)
         self.halo[tt[(self.dens<halo_cutoff[self.cluster])]]=-1
