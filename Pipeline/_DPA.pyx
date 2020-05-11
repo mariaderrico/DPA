@@ -82,7 +82,7 @@ def get_borders( N, k_hat, indices, clu_labels, Nclus, g, densities, err_densiti
         for cp in range(Nclus):
             j = border_dict[(i,c)][cp]
             if j!=-1:
-                for k in range(0,max(k_hat)): 
+                for k in range(0,min(1000, N/2)): 
                     z = indices[j][k+1]
                     if z == i:
                         m_c = min(c,cp)
