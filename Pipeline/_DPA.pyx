@@ -55,7 +55,7 @@ def get_borders( N, k_hat, indices, clu_labels, Nclus, g, densities, err_densiti
     cdef dict border_dict = {}
     #cdef dict border_kmax = {}
     cdef dict g_saddle = {}
-    cdef int i, k, j, c, cp, m_c, M_c, id_max
+    cdef int i, k, j, c, cp, m_c, M_c, id_max,limit
     cdef float g_max 
 
     # Criterion 1 from Heuristic 2:
@@ -78,11 +78,12 @@ def get_borders( N, k_hat, indices, clu_labels, Nclus, g, densities, err_densiti
 
     # Criterion 2 from Heuristic 2:
     # check if i is the closest point to j among those belonging to c.
+    limit=indices.shape[1]-1
     for i,c in border_dict.keys():
         for cp in range(Nclus):
             j = border_dict[(i,c)][cp]
             if j!=-1:
-                for k in range(0,min(1000, N/2)): 
+                for k in range(0,limit): 
                     z = indices[j][k+1]
                     if z == i:
                         m_c = min(c,cp)
