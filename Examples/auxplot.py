@@ -44,7 +44,7 @@ def plots_topography(dpa,ax_dendrogram,ax_project):
     nd=int((Nclus_m*Nclus_m-Nclus_m)/2)
     Dis = np.empty(nd,dtype=float)
     nl=0
-    Fmax=max(dpa.densities)
+    Fmax=max(dpa.densities_)
     Rho_bord= np.zeros((Nclus_m,Nclus_m),dtype=float)
     for row in dpa.topography_:
         Rho_bord[row[0]][row[1]]=row[2]
