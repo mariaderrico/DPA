@@ -128,7 +128,7 @@ Installation
 Assuming you already have the Python virtual enviroment installed and activated on your machine, 
 run the following commands to download the DPApipeline source code::
 
-    git clone https://airamd@bitbucket.org/airamd/dpapipeline.git
+    git clone git@github.com:mariaderrico/DPA.git
 
 Install DPApipeline with the following commands::
 
