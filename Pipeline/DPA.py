@@ -9,11 +9,7 @@
 import numpy as np
 from sklearn.base import BaseEstimator, ClusterMixin, DensityMixin, ClassifierMixin, TransformerMixin
 from sklearn.utils.validation import check_X_y, check_array, check_is_fitted
-from sklearn.utils.multiclass import unique_labels
-from sklearn.metrics import euclidean_distances
 from sklearn.neighbors import NearestNeighbors
-from sklearn.neighbors import kneighbors_graph
-from math import log, sqrt, exp, lgamma, pi, pow
 from Pipeline import _DPA
 from Pipeline.twoNN import twoNearestNeighbors
 from Pipeline.PAk import PointAdaptive_kNN
@@ -22,6 +18,7 @@ from Pipeline.PAk import PointAdaptive_kNN
 VALID_METRIC = ['precomputed', 'euclidean','cosine']
 VALID_DIM = ['auto', 'twoNN']
 VALID_DENSITY = ['PAk', 'kNN']
+
 
 def _DensityPeakAdvanced(densities, err_densities, k_hat, distances, indices, Z):  
     """Main function implementing the Density Peak Advanced clustering algorithm: 
@@ -287,7 +284,7 @@ class DensityPeakAdvanced(ClusterMixin, BaseEstimator):
         self.frac = frac
         self.n_jobs = n_jobs
 
-        if metric not in VALID_METRIC:
+        if metric not in VALID_METRIC or not callable(metric):
             raise ValueError("invalid metric: '{0}'".format(metric))
 
         if dim_algo not in VALID_DIM:
@@ -307,6 +304,24 @@ class DensityPeakAdvanced(ClusterMixin, BaseEstimator):
         if self.nn_distances is not None and self.nn_indices is not None:        
             if self.nn_distances.shape[1] != self.nn_indices.shape[1]:
                 raise ValueError("check nn_distances and nn_indices. Mismatch in array dimension.")
+
+    def get_pak_args(self, **kwargs):
+        """Returns argument for initialisation of Pak algorithm"""
+        pak_args = dict(
+            k_max=self.k_max_,
+            D_thr=self.D_thr,
+            metric=self.metric,
+            nn_distances=self.nn_distances,
+            nn_indices=self.nn_indices,
+            dim_algo=self.dim_algo,
+            blockAn=self.blockAn,
+            block_ratio=self.block_ratio,
+            frac=self.frac,
+            dim=self.dim_,
+            n_jobs=self.n_jobs
+        )
+        pak_args.update(kwargs)
+        return pak_args
  
     def fit(self, X, y=None):
         """Fit the DPA clustering on the data.
@@ -338,7 +353,6 @@ class DensityPeakAdvanced(ClusterMixin, BaseEstimator):
                           " a custom affinity matrix, "
                           "set ``affinity=precomputed``.")
 
-        
         self.k_max_ = self.k_max
         self.dim_ = self.dim
         if not self.dim:
@@ -353,8 +367,6 @@ class DensityPeakAdvanced(ClusterMixin, BaseEstimator):
             else:
                 pass
 
-    
-            
         # If densities, uncertainties and k_hat are provided as input, compute only the
         # matrix of nearest neighbor: 
         self.densities_ = self.densities
@@ -381,18 +393,13 @@ class DensityPeakAdvanced(ClusterMixin, BaseEstimator):
                 self.distances_, self.indices_ = nbrs.kneighbors(X) 
         elif self.density_algo == "PAk":
             # If the nearest neighbors matrix is precomputed:
+            pak_args = self.get_pak_args()
             if self.nn_distances is not None and self.nn_indices is not None:
-                self.k_max_ = self.nn_distances.shape[1]-1
-                PAk = PointAdaptive_kNN(k_max=self.k_max_, D_thr=self.D_thr, metric=self.metric,
-                                                   nn_distances=self.nn_distances, nn_indices=self.nn_indices,
-                                                   dim_algo=self.dim_algo, blockAn=self.blockAn,
-                                                   block_ratio=self.block_ratio,
-                                                   frac=self.frac, dim=self.dim_, n_jobs=self.n_jobs).fit(X)
+                pak_args['k_max_'] = self.nn_distances.shape[1]-1
+                PAk = PointAdaptive_kNN(**pak_args).fit(X)
             else:
-                PAk = PointAdaptive_kNN(k_max=self.k_max_, D_thr=self.D_thr, metric=self.metric, 
-                                                   dim_algo=self.dim_algo, blockAn=self.blockAn, 
-                                                   block_ratio=self.block_ratio,
-                                                   frac=self.frac, dim=self.dim_, n_jobs=self.n_jobs).fit(X)
+                PAk = PointAdaptive_kNN(**pak_args).fit(X)
+
             self.distances_ = PAk.distances_
             self.indices_ = PAk.indices_ 
             self.densities_ = PAk.densities_
@@ -402,15 +409,16 @@ class DensityPeakAdvanced(ClusterMixin, BaseEstimator):
         else:
             # TODO: implement option for kNN
             pass
-        self.labels_, self.halos_, self.topography_, self.g_, self.centers_ = _DensityPeakAdvanced(self.densities_, 
-                                                              self.err_densities_, self.k_hat_, 
-                                                              self.distances_, self.indices_, self.Z)
-                                                              
+        self.labels_, self.halos_, self.topography_, self.g_, self.centers_ = _DensityPeakAdvanced(
+            densities=self.densities_,
+            err_densities=self.err_densities_,
+            k_hat=self.k_hat_,
+            distances=self.distances_,
+            indices=self.indices_,
+            Z=self.Z)
 
         self.is_fitted_ = True
-        
         return self
-
 
     def fit_predict(self, X, y=None):
         """Perform DPA clustering from features or distance matrix,
@@ -432,17 +440,3 @@ class DensityPeakAdvanced(ClusterMixin, BaseEstimator):
         self.fit(X)
         return self.labels_
 
-"""
-    def get_params(self, deep=True):
-        return {"Z": self.Z, "metric": self.metric, "densities": self.densities,
-                "err_densities": self.err_densities, "k_hat": self.k_hat, "nn_distances": self.nn_distances,
-                "nn_indices": self.nn_indices, "affinity": self.affinity, "density_algo": self.density_algo, 
-                "k_max":self.k_max, "D_thr": self.D_thr,
-                "dim": self.dim, "dim_algo": self.dim_algo, "blockAn": self.blockAn, "block_ratio": self.block_ratio,
-                "frac": self.frac, "n_jobs": self.n_jobs}
-    
-    def set_params(self, **parameters):
-        for parameter, value in parameters.items():
-            setattr(self, parameter, value)
-        return self
-"""

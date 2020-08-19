@@ -56,6 +56,20 @@ def is_almost_equal(x,y,mismatch, decimal):
     else:
         assert True
 
+
+def get_get_pak_args():
+    est = DensityPeakAdvanced(Z=1.5, n_jobs=-1)
+    arg_names = ['k_max', 'D_thr', 'metric', 'nn_distances', 'nn_indices', 'dim_algo', 'blockAn',
+                 'block_ratio', 'frac', 'dim', 'n_jobs']
+    args = est.get_pak_args()
+    assert args['Z'] == 1.5
+    assert args['n_jobs'] == -1
+    assert all(i in args.keys() for i in arg_names)
+
+    args = est.get_pak_args(Z=10)
+    assert args['Z'] == 10
+
+
 def test_PointAdaptive_kNN(data_Fig1, output_Fig1_labels, output_Fig1_labelsHalos, output_Fig1_borders):
     est = DensityPeakAdvanced(Z=1.5, n_jobs=-1)
     assert est.dim == None

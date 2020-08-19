@@ -7,16 +7,13 @@
 import numpy as np
 from sklearn.base import BaseEstimator, DensityMixin, ClassifierMixin, TransformerMixin
 from sklearn.utils.validation import check_X_y, check_array, check_is_fitted
-from sklearn.utils.multiclass import unique_labels
-from sklearn.metrics import euclidean_distances
 from sklearn.neighbors import NearestNeighbors
-from sklearn.neighbors import kneighbors_graph
-from math import log, sqrt, exp, lgamma, pi, pow
 from Pipeline.twoNN import twoNearestNeighbors
 from Pipeline import _PAk
 
 VALID_METRIC = ['precomputed', 'euclidean','cosine']
 VALID_DIM = ['auto', 'twoNN']
+
 
 def _PointAdaptive_kNN(distances, indices, k_max=1000, D_thr=23.92812698, dim=None):
     r"""Main function implementing the Pointwise Adaptive k-NN density estimator.
@@ -203,7 +200,7 @@ class PointAdaptive_kNN(BaseEstimator):
         self.dim = dim
         self.n_jobs = n_jobs
 
-        if metric not in VALID_METRIC:
+        if metric not in VALID_METRIC or not callable(metric):
             raise ValueError("invalid metric: '{0}'".format(metric))
 
         if dim_algo not in VALID_DIM:
@@ -211,7 +208,6 @@ class PointAdaptive_kNN(BaseEstimator):
 
         if self.dim_algo == "twoNN" and self.frac > 1:
             raise ValueError("frac should be between 0 and 1.")
-
 
     def fit(self, X, y=None):
         """Fit the PAk estimator on the data.
@@ -262,24 +258,25 @@ class PointAdaptive_kNN(BaseEstimator):
             self.indices_ = self.nn_indices
         elif self.metric == "precomputed":
             nbrs = NearestNeighbors(n_neighbors=self.k_max_+1, # The point i is counted in its neighborhood 
-                                          algorithm="brute", 
-                                        metric=self.metric,
-                                        n_jobs=self.n_jobs).fit(X)
+                                    algorithm="brute",
+                                    metric=self.metric,
+                                    n_jobs=self.n_jobs).fit(X)
             self.distances_, self.indices_ = nbrs.kneighbors(X)
         else:
             nbrs = NearestNeighbors(n_neighbors=self.k_max_+1, # The point i is counted in its neighborhood 
-                                         algorithm="auto", 
-                                        metric=self.metric, 
-                                        n_jobs=self.n_jobs).fit(X)
+                                    algorithm="auto",
+                                    metric=self.metric,
+                                    n_jobs=self.n_jobs).fit(X)
             self.distances_, self.indices_ = nbrs.kneighbors(X) 
 
-        self.densities_, self.err_densities_, self.k_hat_, self.dc_ = _PointAdaptive_kNN(self.distances_, 
-                                                                                 self.indices_,
-                                                                              k_max=self.k_max_, 
-                                                                              D_thr=self.D_thr, 
-                                                                                  dim=self.dim_)
-        self.is_fitted_ = True
+        self.densities_, self.err_densities_, self.k_hat_, self.dc_ = _PointAdaptive_kNN(
+            distances=self.distances_,
+            indices=self.indices_,
+            k_max=self.k_max_,
+            D_thr=self.D_thr,
+            dim=self.dim_)
 
+        self.is_fitted_ = True
         return self
 
 
