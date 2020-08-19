@@ -284,7 +284,7 @@ class DensityPeakAdvanced(ClusterMixin, BaseEstimator):
         self.frac = frac
         self.n_jobs = n_jobs
 
-        if metric not in VALID_METRIC or not callable(metric):
+        if metric not in VALID_METRIC and not callable(metric):
             raise ValueError("invalid metric: '{0}'".format(metric))
 
         if dim_algo not in VALID_DIM:
@@ -308,7 +308,7 @@ class DensityPeakAdvanced(ClusterMixin, BaseEstimator):
     def get_pak_args(self, **kwargs):
         """Returns argument for initialisation of Pak algorithm"""
         pak_args = dict(
-            k_max=self.k_max_,
+            k_max=self.k_max,
             D_thr=self.D_thr,
             metric=self.metric,
             nn_distances=self.nn_distances,
@@ -317,7 +317,7 @@ class DensityPeakAdvanced(ClusterMixin, BaseEstimator):
             blockAn=self.blockAn,
             block_ratio=self.block_ratio,
             frac=self.frac,
-            dim=self.dim_,
+            dim=self.dim,
             n_jobs=self.n_jobs
         )
         pak_args.update(kwargs)
@@ -353,16 +353,14 @@ class DensityPeakAdvanced(ClusterMixin, BaseEstimator):
                           " a custom affinity matrix, "
                           "set ``affinity=precomputed``.")
 
-        self.k_max_ = self.k_max
-        self.dim_ = self.dim
         if not self.dim:
             if self.dim_algo == "auto":
-                self.dim_ = X.shape[1]
+                self.dim = X.shape[1]
             elif self.dim_algo == "twoNN":
                 if self.block_ratio >= X.shape[0]:
                     raise ValueError("block_ratio is larger than the sample size, the minimum size for \
                                       block analysis would be zero. Please set a value lower than "+str(X.shape[0]))
-                self.dim_ = twoNearestNeighbors(blockAn=self.blockAn, block_ratio=self.block_ratio, metric=self.metric,
+                self.dim = twoNearestNeighbors(blockAn=self.blockAn, block_ratio=self.block_ratio, metric=self.metric,
                                                frac=self.frac, n_jobs=self.n_jobs).fit(X).dim_
             else:
                 pass
@@ -371,25 +369,25 @@ class DensityPeakAdvanced(ClusterMixin, BaseEstimator):
         # matrix of nearest neighbor: 
         self.densities_ = self.densities
         self.err_densities_ = self.err_densities
-        self.k_hat_ = self.k_hat
+
         if self.densities_ is not None and self.err_densities_ is not None and self.k_hat_ is not None:
             # If the nearest neighbors matrix is precomputed:
             if self.nn_distances is not None and self.nn_indices is not None:
-                self.k_max_ = max(self.k_hat_) 
+                self.k_max = max(self.k_hat_)
                 self.distances_ = self.nn_distances
                 self.indices_ = self.nn_indices
             else:
-                self.k_max_ = max(self.k_hat_)
+                self.k_max = max(self.k_hat_)
                 if self.metric == "precomputed":
                     nbrs = NearestNeighbors(n_neighbors=self.k_max_+1, # The point i is counted in its neighborhood 
-                                                  algorithm="brute", 
-                                                metric=self.metric,
-                                                n_jobs=self.n_jobs).fit(X)
+                                            algorithm="brute",
+                                            metric=self.metric,
+                                            n_jobs=self.n_jobs).fit(X)
                 else:
                     nbrs = NearestNeighbors(n_neighbors=self.k_max_+1, # The point i is counted in its neighborhood 
-                                                 algorithm="auto", 
-                                                metric=self.metric, 
-                                                n_jobs=self.n_jobs).fit(X)
+                                            algorithm="auto",
+                                            metric=self.metric,
+                                            n_jobs=self.n_jobs).fit(X)
                 self.distances_, self.indices_ = nbrs.kneighbors(X) 
         elif self.density_algo == "PAk":
             # If the nearest neighbors matrix is precomputed:

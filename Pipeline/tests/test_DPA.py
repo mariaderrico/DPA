@@ -33,14 +33,14 @@ def output_Fig1_borders():
 
 @pytest.fixture
 def output_Fig1_labels():
-    # Read benchmark final output of the DPA algorithm 
+    # Read benchmark final output of the DPA algorithm
     out_F1 = pd.read_csv("./benchmarks/output_Fig1_labels.csv", header=None)
     out_F1.columns = ["clu"]
     return out_F1
 
 @pytest.fixture
 def output_Fig1_labelsHalos():
-    # Read benchmark final output of the DPA algorithm 
+    # Read benchmark final output of the DPA algorithm
     out_F1 = pd.read_csv("./benchmarks/output_Fig1_labelsHalos.csv", header=None)
     out_F1.columns = ["clu"]
     return out_F1
@@ -57,17 +57,25 @@ def is_almost_equal(x,y,mismatch, decimal):
         assert True
 
 
-def get_get_pak_args():
+def test_get_get_pak_args():
     est = DensityPeakAdvanced(Z=1.5, n_jobs=-1)
     arg_names = ['k_max', 'D_thr', 'metric', 'nn_distances', 'nn_indices', 'dim_algo', 'blockAn',
                  'block_ratio', 'frac', 'dim', 'n_jobs']
     args = est.get_pak_args()
-    assert args['Z'] == 1.5
+    assert args['metric'] == 'euclidean'
     assert args['n_jobs'] == -1
     assert all(i in args.keys() for i in arg_names)
 
     args = est.get_pak_args(Z=10)
     assert args['Z'] == 10
+
+
+def test_metric_callable():
+    dpa = DensityPeakAdvanced(metric=lambda x, y: 1)
+
+def test_metric_fail():
+    with pytest.raises(ValueError):
+        _ = DensityPeakAdvanced(metric='a_metric')
 
 
 def test_PointAdaptive_kNN(data_Fig1, output_Fig1_labels, output_Fig1_labelsHalos, output_Fig1_borders):
@@ -76,7 +84,7 @@ def test_PointAdaptive_kNN(data_Fig1, output_Fig1_labels, output_Fig1_labelsHalo
     assert est.k_max == 1000
     assert est.D_thr == 23.92812698
     assert est.metric == "euclidean"
-    assert est.dim_algo == "twoNN"    
+    assert est.dim_algo == "twoNN"
 
     est.fit(data_Fig1)
     assert hasattr(est, 'is_fitted_')
@@ -84,7 +92,7 @@ def test_PointAdaptive_kNN(data_Fig1, output_Fig1_labels, output_Fig1_labelsHalo
     assert est.k_max_ == max(est.k_hat_)
     print(len(data_Fig1), len(est.densities_))
     assert len(data_Fig1) == len(est.densities_)
-    
+
     assert_array_equal(est.labels_, [c-1 for c in output_Fig1_labels["clu"]])
     is_almost_equal(est.halos_, [c-1 for c in output_Fig1_labelsHalos["clu"]], 0.0, 0)
     #assert_array_equal(est.halos_, output_Fig1_labelsHalos["clu"])

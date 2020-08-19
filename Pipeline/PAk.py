@@ -200,7 +200,7 @@ class PointAdaptive_kNN(BaseEstimator):
         self.dim = dim
         self.n_jobs = n_jobs
 
-        if metric not in VALID_METRIC or not callable(metric):
+        if metric not in VALID_METRIC and not callable(metric):
             raise ValueError("invalid metric: '{0}'".format(metric))
 
         if dim_algo not in VALID_DIM:
