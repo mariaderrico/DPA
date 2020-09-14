@@ -1,7 +1,7 @@
 Density Peaks Advanced clustering
 =================================
 
-The DPApipeline package implements the Density Peaks Advanced (DPA) clustering algorithm as introduced in the paper `Automatic topography of high-dimensional data sets by non-parametric Density Peak clustering`_.
+The DPA package implements the Density Peaks Advanced (DPA) clustering algorithm as introduced in the paper `Automatic topography of high-dimensional data sets by non-parametric Density Peak clustering`_.
 The package offers the following features:
 
 * Intrinsic dimensionality estimation by means of the `TWO-NN` algorithm, published in the `Estimating the intrinsic dimension of datasets by a minimal neighborhood information`_ paper.
@@ -11,19 +11,20 @@ The package offers the following features:
 
 The top-level directory layout::
 
-    cd DPApipeline
+    cd DPA
     ls -l
 
 ::
 
     .
-    |-- data/                            # Input and output files.
+    |-- DP/                              # Python implementation of the Density Peaks clustering.
     |-- docs/                            # Documentation files. 
-    |-- notebooks/                       # Python scripts in Jupyter notebooks.
-    |-- Pipeline/                        # Source files.
+    |-- Examples/                        # Auxiliary scripts for the examples generations.
+    |-- Pipeline/                        # Source files for DPA, PAk and twoNN algorithms.
+    |-- DPA_analysis.ipynb               # Use-case example for DPA.
+    |-- DPA_comparison-all.ipynb         # Performance comparison with other clustering methods.
     |-- README.rst
     |-- requirements.txt
-    |-- run_ipynb2py_versioning.sh
     |-- config.sh
     |-- setup.py
 
@@ -69,15 +70,14 @@ The ``DPApipeline.pdf`` is in the ``docs/_build/rinioh`` folder.
 Jupyter notebooks
 -----------------
 
-Examples of how-to run the ``DPA``, ```PAk`` and ```twoNN`` modules are provided as Jupyter notebooks in the ``notebooks`` folder. Additional useful user-cases are available in the same folder.
+Examples of how-to run the ``DPA``, ```PAk`` and ```twoNN`` modules are provided as Jupyter notebook in ``DPA_analysis.ipynb``. Additional useful use-cases are available in ``DPA_comparison-all.ipynb``, including a performance comparison with the following clustering methods: Bayesian Gaussian Mixture, HDBSCAN, Spectral Clustering and Density Peaks.
 
 ::
 
     .
     |-- ...
-    |-- notebooks/
-    |    |-- DPA_analysis.ipynb                 # Guided example of how-to run the Pipeline package. 
-    |                                            
+    |-- DPA_analysis.ipynb               # Use-case example for DPA.
+    |-- DPA_comparison-all.ipynb         # Performance comparison with other clustering methods.
     |    
     |-- ...                                        
      
@@ -85,14 +85,14 @@ Examples of how-to run the ``DPA``, ```PAk`` and ```twoNN`` modules are provided
 Getting started
 ===============
 
-The source code of DPApipeline is on `github DPApipeline repository`_. 
+The source code of DPA is on `github DPA repository`_. 
 
 You need the ``git`` command in order to be able to clone it, and we
 suggest you to use Python virtual environment in order to create a
-controlled environment in which you can install DPApipeline as
+controlled environment in which you can install DPA as
 normal user avoiding conflicts with system files or Python libraries.
 
-The following section documents the steps required to install DPApipeline on a Linux or Windows/Mac computer.
+The following section documents the steps required to install DPA on a Linux or Windows/Mac computer.
 
 
 Debian/Ubuntu
@@ -128,11 +128,11 @@ Installation
 Assuming you already have the Python virtual enviroment installed and activated on your machine, 
 run the following commands to download the DPApipeline source code::
 
-    git clone git@github.com:mariaderrico/DPA.git
+    git clone https://github.com/mariaderrico/DPA.git
 
-Install DPApipeline with the following commands::
+Install DPA with the following commands::
 
-    cd dpapipeline
+    cd DPA
     . compile.sh 
 
 
@@ -151,6 +151,6 @@ A use-case example is provided in the DPA_analysis.ipynb jupyter notebook.
 .. _`Computing the free energy without collective variables`: https://pubs.acs.org/doi/full/10.1021/acs.jctc.7b00916 
 .. _`Estimating the intrinsic dimension of datasets by a minimal neighborhood information`: https://export.arxiv.org/pdf/1803.06992 
 .. _`Clustering by fast search and find of density peaks`: http://science.sciencemag.org/content/344/6191/1492.full.pdf
-.. _`github DPApipeline repository`: https://airamd@bitbucket.org/airamd/dpapipeline.git
+.. _`github DPApipeline repository`: https://github.com/mariaderrico/DPA.git
 .. _`Anaconda`: https://www.anaconda.com/download/#windows
 .. _`git`: https://git-scm.com
