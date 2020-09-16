@@ -287,7 +287,7 @@ class DensityPeakAdvanced(ClusterMixin, BaseEstimator):
         self.frac = frac
         self.n_jobs = n_jobs
 
-        if metric not in VALID_METRIC:
+        if metric not in VALID_METRIC and not callable(metric):
             raise ValueError("invalid metric: '{0}'".format(metric))
 
         if dim_algo not in VALID_DIM:
