@@ -53,6 +53,16 @@ def is_almost_equal(x,y,mismatch, decimal):
     else:
         assert True
 
+
+def test_metric_callable():
+    _ = PointAdaptive_kNN(metric=lambda x, y: 1)
+
+
+def test_metric_fail():
+    with pytest.raises(ValueError):
+        _ = PointAdaptive_kNN(metric='a_metric')
+
+
 def test_PointAdaptive_kNN(data_Fig1, output_Fig1_test3):
     est = PointAdaptive_kNN(n_jobs=-1, dim_algo="twoNN")
     assert est.dim == None
