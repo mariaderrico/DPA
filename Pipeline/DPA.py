@@ -327,81 +327,89 @@ class DensityPeakAdvanced(ClusterMixin, BaseEstimator):
             Returns self.
         """
         # Input validation
-        X = check_array(X, accept_sparse=['csr', 'csc', 'coo'],
+        if hasattr(self, 'is_fitted_'):
+            pass
+        else:
+            self.is_fitted_=False
+
+        if (self.is_fitted_):
+            pass
+        else:
+            X = check_array(X, accept_sparse=['csr', 'csc', 'coo'],
                         dtype=np.float64, ensure_min_samples=2)
         
-        allow_squared = self.affinity in ["precomputed",
+            allow_squared = self.affinity in ["precomputed",
                                           "precomputed_nearest_neighbors"]
-        if X.shape[0] == X.shape[1] and not allow_squared:
-            warnings.warn("The DPA clustering API has changed. ``fit``"
+            if X.shape[0] == X.shape[1] and not allow_squared:
+                warnings.warn("The DPA clustering API has changed. ``fit``"
                           "now constructs an affinity matrix from data. To use"
                           " a custom affinity matrix, "
                           "set ``affinity=precomputed``.")
 
         
-        self.k_max_ = self.k_max
-        self.dim_ = self.dim
-        if not self.dim:
-            if self.dim_algo == "auto":
-                self.dim_ = X.shape[1]
-            elif self.dim_algo == "twoNN":
-                if self.block_ratio >= X.shape[0]:
-                    raise ValueError("block_ratio is larger than the sample size, the minimum size for \
+            self.k_max_ = self.k_max
+            self.dim_ = self.dim
+            if not self.dim:
+                if self.dim_algo == "auto":
+                    self.dim_ = X.shape[1]
+                elif self.dim_algo == "twoNN":
+                    if self.block_ratio >= X.shape[0]:
+                        raise ValueError("block_ratio is larger than the sample size, the minimum size for \
                                       block analysis would be zero. Please set a value lower than "+str(X.shape[0]))
-                self.dim_ = twoNearestNeighbors(blockAn=self.blockAn, block_ratio=self.block_ratio, metric=self.metric,
+                    self.dim_ = twoNearestNeighbors(blockAn=self.blockAn, block_ratio=self.block_ratio, metric=self.metric,
                                                frac=self.frac, n_jobs=self.n_jobs).fit(X).dim_
-            else:
-                pass
+                else:
+                    pass
 
     
             
         # If densities, uncertainties and k_hat are provided as input, compute only the
         # matrix of nearest neighbor: 
-        self.densities_ = self.densities
-        self.err_densities_ = self.err_densities
-        self.k_hat_ = self.k_hat
-        if self.densities_ is not None and self.err_densities_ is not None and self.k_hat_ is not None:
+            self.densities_ = self.densities
+            self.err_densities_ = self.err_densities
+            self.k_hat_ = self.k_hat
+            if self.densities_ is not None and self.err_densities_ is not None and self.k_hat_ is not None:
             # If the nearest neighbors matrix is precomputed:
-            if self.nn_distances is not None and self.nn_indices is not None:
-                self.k_max_ = max(self.k_hat_) 
-                self.distances_ = self.nn_distances
-                self.indices_ = self.nn_indices
-            else:
-                self.k_max_ = max(self.k_hat_)
-                if self.metric == "precomputed":
-                    nbrs = NearestNeighbors(n_neighbors=self.k_max_+1, # The point i is counted in its neighborhood 
+                if self.nn_distances is not None and self.nn_indices is not None:
+                    self.k_max_ = max(self.k_hat_) 
+                    self.distances_ = self.nn_distances
+                    self.indices_ = self.nn_indices
+                else:
+                    self.k_max_ = max(self.k_hat_)
+                    if self.metric == "precomputed":
+                        nbrs = NearestNeighbors(n_neighbors=self.k_max_+1, # The point i is counted in its neighborhood 
                                                   algorithm="brute", 
                                                 metric=self.metric,
                                                 n_jobs=self.n_jobs).fit(X)
-                else:
-                    nbrs = NearestNeighbors(n_neighbors=self.k_max_+1, # The point i is counted in its neighborhood 
+                    else:
+                        nbrs = NearestNeighbors(n_neighbors=self.k_max_+1, # The point i is counted in its neighborhood 
                                                  algorithm="auto", 
                                                 metric=self.metric, 
                                                 n_jobs=self.n_jobs).fit(X)
-                self.distances_, self.indices_ = nbrs.kneighbors(X) 
-        elif self.density_algo == "PAk":
+                    self.distances_, self.indices_ = nbrs.kneighbors(X) 
+            elif self.density_algo == "PAk":
             # If the nearest neighbors matrix is precomputed:
-            if self.nn_distances is not None and self.nn_indices is not None:
-                self.k_max_ = self.nn_distances.shape[1]-1
-                PAk = PointAdaptive_kNN(k_max=self.k_max_, D_thr=self.D_thr, metric=self.metric,
+                if self.nn_distances is not None and self.nn_indices is not None:
+                    self.k_max_ = self.nn_distances.shape[1]-1
+                    PAk = PointAdaptive_kNN(k_max=self.k_max_, D_thr=self.D_thr, metric=self.metric,
                                                    nn_distances=self.nn_distances, nn_indices=self.nn_indices,
                                                    dim_algo=self.dim_algo, blockAn=self.blockAn,
                                                    block_ratio=self.block_ratio,
                                                    frac=self.frac, dim=self.dim_, n_jobs=self.n_jobs).fit(X)
-            else:
-                PAk = PointAdaptive_kNN(k_max=self.k_max_, D_thr=self.D_thr, metric=self.metric, 
+                else:
+                    PAk = PointAdaptive_kNN(k_max=self.k_max_, D_thr=self.D_thr, metric=self.metric, 
                                                    dim_algo=self.dim_algo, blockAn=self.blockAn, 
                                                    block_ratio=self.block_ratio,
                                                    frac=self.frac, dim=self.dim_, n_jobs=self.n_jobs).fit(X)
-            self.distances_ = PAk.distances_
-            self.indices_ = PAk.indices_ 
-            self.densities_ = PAk.densities_
-            self.err_densities_ = PAk.err_densities_
-            self.k_hat_ = PAk.k_hat_
-            self.k_max_ = max(self.k_hat_)
-        else:
+                self.distances_ = PAk.distances_
+                self.indices_ = PAk.indices_ 
+                self.densities_ = PAk.densities_
+                self.err_densities_ = PAk.err_densities_
+                self.k_hat_ = PAk.k_hat_
+                self.k_max_ = max(self.k_hat_)
+            else:
             # TODO: implement option for kNN
-            pass
+                pass
         self.labels_, self.halos_, self.topography_, self.g_, self.centers_ = _DensityPeakAdvanced(self.densities_, 
                                                               self.err_densities_, self.k_hat_, 
                                                               self.distances_, self.indices_, self.Z)
