@@ -8,4 +8,5 @@ py-cpuinfo
 tabulate
 hdbscan
 Sphinx==1.5.6
-rinohtype
+rinohtype==0.4.2
+rinoh-typeface-dejavuserif==0.1.1
