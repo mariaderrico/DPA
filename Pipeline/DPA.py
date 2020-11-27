@@ -432,17 +432,9 @@ class DensityPeakAdvanced(ClusterMixin, BaseEstimator):
         self.fit(X)
         return self.labels_
 
-"""
-    def get_params(self, deep=True):
-        return {"Z": self.Z, "metric": self.metric, "densities": self.densities,
-                "err_densities": self.err_densities, "k_hat": self.k_hat, "nn_distances": self.nn_distances,
-                "nn_indices": self.nn_indices, "affinity": self.affinity, "density_algo": self.density_algo, 
-                "k_max":self.k_max, "D_thr": self.D_thr,
-                "dim": self.dim, "dim_algo": self.dim_algo, "blockAn": self.blockAn, "block_ratio": self.block_ratio,
-                "frac": self.frac, "n_jobs": self.n_jobs}
-    
-    def set_params(self, **parameters):
-        for parameter, value in parameters.items():
-            setattr(self, parameter, value)
-        return self
-"""
+    def get_computed_params(self):
+        params = self.get_params()
+        for x in params:
+            if x+"_" in self.__dict__:
+                params[x] = self.__dict__[x+"_"]
+        return params
