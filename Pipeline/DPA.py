@@ -226,10 +226,10 @@ class DensityPeakAdvanced(ClusterMixin, BaseEstimator):
         in which the diagonal entries are the heights of the peaks and the off-diagonal entries are the 
         heights of the saddle points. 
 
-    distances_ : array [n_samples, k_max+1]
+    nn_distances_ : array [n_samples, k_max+1]
         Distances to the k_max neighbors of each points. The point itself is included in the array.
 
-    indices_ : array [n_samples, k_max+1]
+    nn_indices_ : array [n_samples, k_max+1]
         Indices of the k_max neighbors of each points. The point itself is included in the array.
  
     k_hat_ : array [n_samples]
@@ -364,8 +364,8 @@ class DensityPeakAdvanced(ClusterMixin, BaseEstimator):
             # If the nearest neighbors matrix is precomputed:
             if self.nn_distances is not None and self.nn_indices is not None:
                 self.k_max_ = max(self.k_hat_) 
-                self.distances_ = self.nn_distances
-                self.indices_ = self.nn_indices
+                self.nn_distances_ = self.nn_distances
+                self.nn_indices_ = self.nn_indices
             else:
                 self.k_max_ = max(self.k_hat_)
                 if self.metric == "precomputed":
@@ -378,7 +378,7 @@ class DensityPeakAdvanced(ClusterMixin, BaseEstimator):
                                                  algorithm="auto", 
                                                 metric=self.metric, 
                                                 n_jobs=self.n_jobs).fit(X)
-                self.distances_, self.indices_ = nbrs.kneighbors(X) 
+                self.nn_distances_, nn_self.indices_ = nbrs.kneighbors(X) 
         elif self.density_algo == "PAk":
             # If the nearest neighbors matrix is precomputed:
             if self.nn_distances is not None and self.nn_indices is not None:
@@ -393,8 +393,8 @@ class DensityPeakAdvanced(ClusterMixin, BaseEstimator):
                                                    dim_algo=self.dim_algo, blockAn=self.blockAn, 
                                                    block_ratio=self.block_ratio,
                                                    frac=self.frac, dim=self.dim_, n_jobs=self.n_jobs).fit(X)
-            self.distances_ = PAk.distances_
-            self.indices_ = PAk.indices_ 
+            self.nn_distances_ = PAk.distances_
+            self.nn_indices_ = PAk.indices_ 
             self.densities_ = PAk.densities_
             self.err_densities_ = PAk.err_densities_
             self.k_hat_ = PAk.k_hat_
@@ -404,7 +404,7 @@ class DensityPeakAdvanced(ClusterMixin, BaseEstimator):
             pass
         self.labels_, self.halos_, self.topography_, self.g_, self.centers_ = _DensityPeakAdvanced(self.densities_, 
                                                               self.err_densities_, self.k_hat_, 
-                                                              self.distances_, self.indices_, self.Z)
+                                                              self.nn_distances_, self.nn_indices_, self.Z)
                                                               
 
         self.is_fitted_ = True
