@@ -249,7 +249,8 @@ class PointAdaptive_kNN(BaseEstimator):
 
         self.k_max_ = self.k_max
         if self.k_max > X.shape[0]:
-            self.k_max_ = int(X.shape[0]/2)
+            # the following value is chosen to better address very small data set
+            self.k_max_ = int(X.shape[0]*0.4)
         if self.k_max < 3:
             raise ValueError("k_max is below 3, the minimum value required for \
                         statistical significance. Please use a larger datasets.")
