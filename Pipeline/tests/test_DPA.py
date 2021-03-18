@@ -5,8 +5,8 @@ from pandas.util.testing import assert_frame_equal
 import numpy.testing as npt
 
 from sklearn.datasets import load_iris
-from sklearn.utils.testing import assert_array_equal
-from sklearn.utils.testing import assert_allclose
+from sklearn.utils._testing import assert_array_equal
+from sklearn.utils._testing import assert_allclose
 
 from Pipeline.DPA import DensityPeakAdvanced
 
