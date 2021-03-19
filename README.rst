@@ -1,15 +1,28 @@
 Density Peaks Advanced clustering
 =================================
 
-The DPA package implements the Density Peaks Advanced (DPA) clustering algorithm as introduced in the paper `Automatic topography of high-dimensional data sets by non-parametric Density Peak clustering`_.
+Status of the `scikit-learn`_ compatibility test:
+
+.. image:: https://github.com/mariaderrico/DPA/actions/workflows/runpytest.yml/badge.svg?branch=master
+   :alt: scikit-learn compatibility test status on Github Actions
+   :target: https://github.com/mariaderrico/DPA/actions/workflows/runpytest.yml
+
+
+
+The DPA package implements the Density Peaks Advanced (DPA) clustering algorithm as introduced in the paper "Automatic topography of high-dimensional data sets by non-parametric Density Peak clustering", published on `M. d'Errico, E. Facco, A. Laio, A. Rodriguez, Information Sciences, Volume 560, June 2021, 476-492`_  (also available on `arXiv`_).
+
 The package offers the following features:
 
 * Intrinsic dimensionality estimation by means of the `TWO-NN` algorithm, published in the `Estimating the intrinsic dimension of datasets by a minimal neighborhood information`_ paper.
 * Adaptive k-NN Density estimation by means of the `PAk` algorithm, published in the `Computing the free energy without collective variables`_ paper.
 * Advanced version of the `DP` clustering algorithm, published in the `Clustering by fast search and find of density peaks`_ paper, which includes an automatic search of cluster centers and assessment of statistical significance of the clusters  
 
+.. contents::
 
-The top-level directory layout::
+Top-level directory layout
+------------------------------
+
+::
 
     cd DPA
     ls -l
@@ -27,6 +40,8 @@ The top-level directory layout::
     |-- requirements.txt
     |-- config.sh
     |-- setup.py
+
+
 
 Source files
 ------------
@@ -83,7 +98,7 @@ Examples of how-to run the ``DPA``, ```PAk`` and ```twoNN`` modules are provided
      
 
 Getting started
-===============
+---------------
 
 The source code of DPA is on `github DPA repository`_. 
 
@@ -96,7 +111,7 @@ The following section documents the steps required to install DPA on a Linux or 
 
 
 Debian/Ubuntu
--------------
+^^^^^^^^^^^^^
 
 Run the following commands to create and activate a Python virtual environment with *python virtualenv*::
 
@@ -106,7 +121,7 @@ Run the following commands to create and activate a Python virtual environment w
 
 
 Windows
--------
+^^^^^^^
 
 
 A possible setup makes use of `Anaconda`_.
@@ -123,7 +138,7 @@ to list the available environments you can type ``conda info --envs``, and to de
 
 
 Installation
-============
+------------
 
 Assuming you already have the Python virtual enviroment installed and activated on your machine, 
 run the following commands to download the DPApipeline source code::
@@ -140,14 +155,16 @@ Note that it is possible to check which packages are installed with the ``pip fr
 
 
 Quickstart
-----------
+^^^^^^^^^^
 
 A use-case example is provided in the DPA_analysis.ipynb jupyter notebook.
 
 
 .. References
 
-.. _`Automatic topography of high-dimensional data sets by non-parametric Density Peak clustering`: http://arxiv.org/abs/1802.10549v1
+.. _`scikit-learn`: https://scikit-learn.org/stable/
+.. _`M. d'Errico, E. Facco, A. Laio, A. Rodriguez, Information Sciences, Volume 560, June 2021, 476-492`: https://www.sciencedirect.com/science/article/pii/S0020025521000116?dgcid=author
+.. _`arXiv`: https://arxiv.org/abs/1802.10549v2
 .. _`Computing the free energy without collective variables`: https://pubs.acs.org/doi/full/10.1021/acs.jctc.7b00916 
 .. _`Estimating the intrinsic dimension of datasets by a minimal neighborhood information`: https://export.arxiv.org/pdf/1803.06992 
 .. _`Clustering by fast search and find of density peaks`: http://science.sciencemag.org/content/344/6191/1492.full.pdf
