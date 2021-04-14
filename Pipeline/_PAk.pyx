@@ -4,10 +4,7 @@
 #
 # Licence: BSD 3 clause
 
-import numpy as np
-cimport numpy as c_np
 from math import log, sqrt, exp, lgamma, pi, pow
-from scipy.optimize import minimize
 import sys
 from Pipeline import NR
 cimport cython
@@ -117,23 +114,16 @@ def get_densities(dim, distances, k_max, D_thr, indices):
     cdef float V1 = exp(dim/2.*log(pi)-lgamma((dim+2)/2.))    
     cdef int N = distances.shape[0]
     cdef list k_hat = []
-    #cdef c_np.ndarray[double, ndim=1] dc = np.array([])
-    #cdef c_np.ndarray[double, ndim=1] densities = np.array([])
-    #cdef c_np.ndarray[double, ndim=1] err_densities = np.array([])
     cdef list dc = []
     cdef list densities = []
     cdef list err_densities = []
     cdef dict V_dic = {}
     cdef int k, identical
     cdef double dc_i
-    cdef c_np.ndarray[double, ndim=1] Vi 
     cdef float rho_min = DBL_MAX
     for i in range(0,N):
         k, dc_i, V_dic = ratio_test(i, N, V1, V_dic, dim, distances, k_max, D_thr, indices)
         k_hat.append(k-1)
-        #dc = np.append(dc, dc_i)
-        #densities = np.append(densities, log(k-1)-(log(V1)+dim*log(dc[i]))) 
-        #err_densities = np.append(err_densities, sqrt((4.*(k-1)+2.)/((k-1)*(k-2))))
         dc.append(dc_i)
         densities.append(log(k-1)-(log(V1)+dim*log(dc[i]))) 
         err_densities.append(sqrt((4.*(k-1)+2.)/((k-1)*(k-2))))
