@@ -22,11 +22,6 @@ EXTENSIONS = [
         include_dirs=[numpy_include_dir,],
         define_macros=[('CYTHON_TRACE', '1' if debug else '0')],
         extra_compile_args=['-O3'],
-        ),
-    Extension('NR', ['_NRmaxL.pyx'],
-        include_dirs=[numpy_include_dir,],
-        define_macros=[('CYTHON_TRACE', '1' if debug else '0')],
-        extra_compile_args=['-O3'],
         )
 ]
 
