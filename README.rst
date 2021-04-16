@@ -66,8 +66,6 @@ The source Python codes are stored inside the ``Pipeline`` folder::
     |   |                    # density estimator.
     |   |
     |   |-- _PAk.pyx         # Cython extension of the PAk module.
-    |   |
-    |   |-- NRmaxL.f90       # Fortran extension for the Newton-Rapson algorithm. 
     |   |                    
     |   |-- twoNN.py         # Python module implementing the TWO-NN
     |                        # algorithm for the ID calculation.                     

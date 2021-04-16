@@ -1,25 +1,35 @@
+# !python
+# cython: boundscheck=False
+# cython: cdivision=True
+# cython: nonecheck=False
+# cython: wraparound=False
+# cython: profile=False
+
 # file '_PAk.pyx'. 
 #
 # Author: Maria d'Errico <mariaderr@gmail.com>
 #
 # Licence: BSD 3 clause
 
-from math import log, sqrt, exp, lgamma, pi, pow
+from libc.math cimport log, sqrt, exp, lgamma, pi, pow
 import sys
-from Pipeline import NR
+import numpy as np
 cimport cython
 
+fepsilon = sys.float_info.epsilon
 DBL_MIN = sys.float_info.min
 DBL_MAX = sys.float_info.max
 
-def get_volume(V1, dist, dim):
+cdef double get_volume(double V1, double dist, int dim):
     # Check if the distance is not zero and return the corresponding volume
     if dist > 0:
         return V1*exp(dim*(log(dist)))
     else:
         return 0
 
-def ratio_test(i, N, V1, V_dic, dim, distances, k_max, D_thr, indices):
+cdef tuple ratio_test(int i, int N, double V1, dict V_dic, int dim,
+        double[:,:]  distances, int k_max,
+        double D_thr, long[:,:] indices):
     # Compute the volume of the dim-sphere with unitary radius
     cdef float Dk, vi, vj
     cdef int k, j 
@@ -70,8 +80,8 @@ def ratio_test(i, N, V1, V_dic, dim, distances, k_max, D_thr, indices):
     return k, distances[i][k-1], V_dic
 
 
-@cython.cdivision(True)
-def get_densities(dim, distances, k_max, D_thr, indices):
+cpdef tuple get_densities(int dim, double[:,:] distances,
+        int k_max, double D_thr, long[:,:] indices):
     """Main function implementing the Pointwise Adaptive k-NN density estimator.
 
     Parameters
@@ -121,14 +131,14 @@ def get_densities(dim, distances, k_max, D_thr, indices):
     cdef int k, identical
     cdef double dc_i
     cdef float rho_min = DBL_MAX
-    for i in range(0,N):
+    for i in range(N):
         k, dc_i, V_dic = ratio_test(i, N, V1, V_dic, dim, distances, k_max, D_thr, indices)
         k_hat.append(k-1)
         dc.append(dc_i)
         densities.append(log(k-1)-(log(V1)+dim*log(dc[i]))) 
         err_densities.append(sqrt((4.*(k-1)+2.)/((k-1)*(k-2))))
         # Apply a correction to the density estimation if no neighbors are at the same distance from point i 
-        densities[i] = NR.nrmaxl(densities[i], k_hat[i], V_dic[i], k_max)
+        densities[i] = nrmaxl(densities[i], k_hat[i], V_dic[i], k_max)
         if densities[i] < rho_min:
             rho_min = densities[i]
     # Apply shift to have all densities as positive values 
@@ -136,3 +146,83 @@ def get_densities(dim, distances, k_max, D_thr, indices):
     
     return k_hat, dc, densities, err_densities
 
+
+cdef double nrmaxl(double rinit,
+            int kopt,
+            list V_dic,
+            int maxk):
+    cdef int j,niter, jf
+    cdef double a, b, ga, gb, stepmax,func,sigma,sa,sb
+    cdef double[:] vi = np.zeros(len(V_dic), dtype=np.double)
+    cdef double[:,:] Covinv2 = np.zeros((2,2), dtype=np.double)
+    cdef double[:,:] Cov2 = np.zeros((2,2), dtype=np.double)
+    kNN = False
+    # Initialization of the parameters in the log-Likelihod function
+    # b corresponds to -F=log(density)
+    b = rinit
+    a = 0.
+    stepmax = 0.1*abs(b)
+    # Compute volumes of the shells enclosed by consecutive neighbors
+    vi[0] = V_dic[0]
+    for j in range(1,kopt):
+        vi[j] = V_dic[j]-V_dic[j-1]
+        if vi[j] < 1e-100 :
+           kNN = True
+    if kNN:
+        return b
+    ga, gb, Cov2 = get_derivatives(a,b,kopt,vi)
+    Covinv2 = get_inverse(Cov2)
+    func=100.
+    niter=0
+    # NR maximization loop
+    while ( (func>1e-3) and (niter < 1000) ):
+        sb=(Covinv2[0,0]*gb+Covinv2[0,1]*ga)
+        sa=(Covinv2[1,0]*gb+Covinv2[1,1]*ga)
+        niter=niter+1
+        sigma=0.1
+        if (abs(sigma*sb) > stepmax) :
+            sigma=abs(stepmax/sb)
+        b=b-sigma*sb
+        a=a-sigma*sa
+        ga, gb, Cov2 = get_derivatives(a,b,kopt,vi)
+        Covinv2 = get_inverse(Cov2)
+        if ((abs(a) <= fepsilon ) or (abs(b) <= fepsilon )):
+            func=max(gb,ga)
+        else:
+            func=max(abs(gb/b),abs(ga/a))
+    return b
+
+
+cdef tuple get_derivatives(double a, double b, int kopt, double[:] vi):
+    cdef double L0 , gb, ga, tt, t, s
+    cdef double[:,:] Cov2 = np.zeros((2,2), dtype=np.double)
+    cdef int j,jf
+    L0=0.
+    gb=kopt
+    ga=(kopt+1)*(kopt)/2.
+    Cov2[0,0]=0.
+    Cov2[0,1]=0.
+    Cov2[1,1]=0.
+    for j in range(kopt):
+        jf=(j+1)
+        t=b+a*jf
+        s=exp(t)
+        tt=vi[j]*s
+        L0=L0+t-tt
+        gb=gb-tt
+        ga=ga-jf*tt
+        Cov2[0,0]=Cov2[0,0]-tt
+        Cov2[0,1]=Cov2[0,1]-jf*tt
+        Cov2[1,1]=Cov2[1,1]-jf*jf*tt
+    Cov2[1,0]=Cov2[0,1]
+    return ga, gb, Cov2
+
+cdef double[:,:] get_inverse(double[:,:] Cov2):
+    cdef double detinv
+    cdef double[:,:] Covinv2 = np.zeros((2,2), dtype=np.double)
+    detinv = 1./(Cov2[0,0]*Cov2[1,1] - Cov2[0,1]*Cov2[1,0])
+    Covinv2[0,0] = detinv * Cov2[1,1]
+    Covinv2[1,0] = -1.*detinv * Cov2[1,0]
+    Covinv2[0,1] = -1.*detinv * Cov2[0,1]
+    Covinv2[1,1] = detinv * Cov2[0,0]
+    return Covinv2
