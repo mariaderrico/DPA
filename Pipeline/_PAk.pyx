@@ -28,8 +28,8 @@ cdef double get_volume(double V1, double dist, int dim):
         return 0
 
 cdef tuple ratio_test(int i, int N, double V1, dict V_dic, int dim,
-        double[:,:]  distances, int k_max,
-        double D_thr, long[:,:] indices):
+                      double[:,:]  distances, int k_max,
+                      double D_thr, long[:,:] indices):
     # Compute the volume of the dim-sphere with unitary radius
     cdef float Dk, vi, vj
     cdef int k, j 
@@ -44,7 +44,7 @@ cdef tuple ratio_test(int i, int N, double V1, dict V_dic, int dim,
     # Stop when the k+1-th neighbors has a significantly different density from point i 
     while (k<k_max and Dk<=D_thr):
         # Note: the k-th neighbor is at position k in the distances and indices arrays
-        if i in V_dic.keys() and V_dic[i][k-1] != -1:
+        if (i in V_dic.keys() and V_dic[i][k-1] != -1):
             vi = V_dic[i][k-1]
         elif i not in V_dic.keys():
             V_dic[i] = [-1]*k_max
@@ -58,7 +58,7 @@ cdef tuple ratio_test(int i, int N, double V1, dict V_dic, int dim,
             vi = V_dic[i][k-1]
         # Check on the k+1-th neighbor of i
         j = indices[i][k+1]
-        if j in V_dic.keys() and V_dic[j][k-1] != -1:
+        if (j in V_dic.keys() and V_dic[j][k-1] != -1):
             vj = V_dic[j][k-1]
         elif j not in V_dic.keys():
             V_dic[j] = [-1]*k_max
@@ -71,7 +71,7 @@ cdef tuple ratio_test(int i, int N, double V1, dict V_dic, int dim,
             V_dic[j][k-1] = get_volume(V1, distances[j][k], dim)
             vj = V_dic[j][k-1]
         # In case of identical points vi and/or vj are set to zero
-        if vi>0 and vj>0:
+        if (vi>0 and vj>0):
             Dk = -2.*k*(log(vi)+log(vj)-2.*log(vi+vj)+log(4.))
         else:
             pass
@@ -81,7 +81,7 @@ cdef tuple ratio_test(int i, int N, double V1, dict V_dic, int dim,
 
 
 cpdef tuple get_densities(int dim, double[:,:] distances,
-        int k_max, double D_thr, long[:,:] indices):
+                          int k_max, double D_thr, long[:,:] indices):
     """Main function implementing the Pointwise Adaptive k-NN density estimator.
 
     Parameters
@@ -147,12 +147,10 @@ cpdef tuple get_densities(int dim, double[:,:] distances,
     return k_hat, dc, densities, err_densities
 
 
-cdef double nrmaxl(double rinit,
-            int kopt,
-            list V_dic,
-            int maxk):
-    cdef int j,niter, jf
-    cdef double a, b, ga, gb, stepmax,func,sigma,sa,sb
+cdef double nrmaxl(double rinit, int kopt,
+                   list V_dic, int maxk):
+    cdef int j, niter, jf
+    cdef double a, b, ga, gb, stepmax, func, sigma, sa, sb
     cdef double[:] vi = np.zeros(len(V_dic), dtype=np.double)
     cdef double[:,:] Covinv2 = np.zeros((2,2), dtype=np.double)
     cdef double[:,:] Cov2 = np.zeros((2,2), dtype=np.double)
@@ -166,55 +164,55 @@ cdef double nrmaxl(double rinit,
     vi[0] = V_dic[0]
     for j in range(1,kopt):
         vi[j] = V_dic[j]-V_dic[j-1]
-        if vi[j] < 1e-100 :
+        if vi[j] < 1e-100:
            kNN = True
     if kNN:
         return b
-    ga, gb, Cov2 = get_derivatives(a,b,kopt,vi)
+    ga, gb, Cov2 = get_derivatives(a, b, kopt, vi)
     Covinv2 = get_inverse(Cov2)
-    func=100.
-    niter=0
+    func = 100.
+    niter = 0
     # NR maximization loop
-    while ( (func>1e-3) and (niter < 1000) ):
-        sb=(Covinv2[0,0]*gb+Covinv2[0,1]*ga)
-        sa=(Covinv2[1,0]*gb+Covinv2[1,1]*ga)
-        niter=niter+1
-        sigma=0.1
-        if (abs(sigma*sb) > stepmax) :
-            sigma=abs(stepmax/sb)
-        b=b-sigma*sb
-        a=a-sigma*sa
-        ga, gb, Cov2 = get_derivatives(a,b,kopt,vi)
+    while ((func>1e-3) and (niter < 1000)):
+        sb = (Covinv2[0,0]*gb+Covinv2[0,1]*ga)
+        sa = (Covinv2[1,0]*gb+Covinv2[1,1]*ga)
+        niter = niter+1
+        sigma = 0.1
+        if abs(sigma*sb) > stepmax:
+            sigma = abs(stepmax/sb)
+        b = b-sigma*sb
+        a = a-sigma*sa
+        ga, gb, Cov2 = get_derivatives(a, b, kopt, vi)
         Covinv2 = get_inverse(Cov2)
-        if ((abs(a) <= fepsilon ) or (abs(b) <= fepsilon )):
-            func=max(gb,ga)
+        if (abs(a) <= fepsilon or abs(b) <= fepsilon):
+            func = max(gb,ga)
         else:
-            func=max(abs(gb/b),abs(ga/a))
+            func = max(abs(gb/b),abs(ga/a))
     return b
 
 
 cdef tuple get_derivatives(double a, double b, int kopt, double[:] vi):
-    cdef double L0 , gb, ga, tt, t, s
+    cdef double L0, gb, ga, tt, t, s
     cdef double[:,:] Cov2 = np.zeros((2,2), dtype=np.double)
-    cdef int j,jf
-    L0=0.
-    gb=kopt
-    ga=(kopt+1)*(kopt)/2.
-    Cov2[0,0]=0.
-    Cov2[0,1]=0.
-    Cov2[1,1]=0.
+    cdef int j, jf
+    L0 = 0.
+    gb = kopt
+    ga = (kopt+1)*(kopt)/2.
+    Cov2[0,0] = 0.
+    Cov2[0,1] = 0.
+    Cov2[1,1] = 0.
     for j in range(kopt):
-        jf=(j+1)
-        t=b+a*jf
-        s=exp(t)
-        tt=vi[j]*s
-        L0=L0+t-tt
-        gb=gb-tt
-        ga=ga-jf*tt
-        Cov2[0,0]=Cov2[0,0]-tt
-        Cov2[0,1]=Cov2[0,1]-jf*tt
-        Cov2[1,1]=Cov2[1,1]-jf*jf*tt
-    Cov2[1,0]=Cov2[0,1]
+        jf = (j+1)
+        t = b+a*jf
+        s = exp(t)
+        tt = vi[j]*s
+        L0 = L0+t-tt
+        gb = gb-tt
+        ga = ga-jf*tt
+        Cov2[0,0] = Cov2[0,0]-tt
+        Cov2[0,1] = Cov2[0,1]-jf*tt
+        Cov2[1,1] = Cov2[1,1]-jf*jf*tt
+    Cov2[1,0] = Cov2[0,1]
     return ga, gb, Cov2
 
 cdef double[:,:] get_inverse(double[:,:] Cov2):
