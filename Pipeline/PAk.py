@@ -13,7 +13,6 @@ from sklearn.neighbors import NearestNeighbors
 from sklearn.neighbors import kneighbors_graph
 from math import log, sqrt, exp, lgamma, pi, pow
 from Pipeline.twoNN import twoNearestNeighbors
-from Pipeline import _PAk
 
 VALID_METRIC = ['precomputed', 'euclidean','cosine']
 VALID_DIM = ['auto', 'twoNN']
@@ -60,6 +59,8 @@ def _PointAdaptive_kNN(distances, indices, k_max=1000, D_thr=23.92812698, dim=No
     
 
     """
+    from Pipeline import _PAk
+
     # The adaptive k-Nearest Neighbor density estimator
     k_hat, dc, densities, err_densities = _PAk.get_densities(dim, distances, k_max, D_thr, indices)
 

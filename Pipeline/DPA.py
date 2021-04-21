@@ -14,7 +14,6 @@ from sklearn.metrics import euclidean_distances
 from sklearn.neighbors import NearestNeighbors
 from sklearn.neighbors import kneighbors_graph
 from math import log, sqrt, exp, lgamma, pi, pow
-from Pipeline import _DPA
 from Pipeline.twoNN import twoNearestNeighbors
 from Pipeline.PAk import PointAdaptive_kNN
 
@@ -73,6 +72,7 @@ def _DensityPeakAdvanced(densities, err_densities, k_hat, distances, indices, Z)
         The list of points identified as the centers of the Nclus statistically significant clusters.
 
     """
+    from Pipeline import _DPA
 
     # We define as cluster centers the local maxima of g, where g is defined as density-err_density.
     g = [densities[i]-err_densities[i] for i in range(0,len(densities))]
