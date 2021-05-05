@@ -32,8 +32,6 @@ DISTNAME = 'DPApipeline'
 DESCRIPTION = 'The Density Peak Advanced packages.'
 with codecs.open('README.rst', encoding='utf-8-sig') as f:
     LONG_DESCRIPTION = f.read()
-with open('requirements.txt') as f:
-    INSTALL_REQUIRES = f.read().splitlines()
 CLASSIFIERS = ['Intended Audience :: Science/Research',
                'Intended Audience :: Developers',
                'License :: OSI Approved',
@@ -51,13 +49,20 @@ CLASSIFIERS = ['Intended Audience :: Science/Research',
 EXTRAS_REQUIRE = {
     'tests': [
         'pytest',
-        'pytest-cov'],
+        'pytest-cov',
+        'pandas'],
     'docs': [
-        'sphinx',
+        'sphinx==1.5.6',
         'sphinx-gallery',
         'sphinx_rtd_theme',
+        'rinohtype==0.4.2',
+        'rinoh-typeface-dejavuserif==0.1.1',
         'numpydoc',
         'matplotlib'
+        'scipy',
+        'jupyter',
+        'py-cpuinfo',
+        'hdbscan'
     ]
 }
 EXTENSIONS = [Extension(splitext(relpath(path, 'src').replace(os.sep, '.'))[0],
@@ -77,6 +82,6 @@ setup(name=DISTNAME,
       packages=find_packages('src')+find_packages('Examples')+find_packages('DP'),
       package_dir={'': 'src'},
       py_modules=[splitext(basename(path))[0] for path in glob('src/*.py')],
-      install_requires=INSTALL_REQUIRES,
+      install_requires=['scikit-learn==0.24.*'],
       extras_require=EXTRAS_REQUIRE,
       ext_modules = cythonize(EXTENSIONS))
