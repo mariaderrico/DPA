@@ -1,12 +1,13 @@
 import pytest
+import os
 import numpy as np
 import pandas as pd
 from pandas.util.testing import assert_frame_equal
 import numpy.testing as npt
 
 from sklearn.datasets import load_iris
-from sklearn.utils.testing import assert_array_equal
-from sklearn.utils.testing import assert_allclose
+from sklearn.utils._testing import assert_array_equal
+from sklearn.utils._testing import assert_allclose
 
 from Pipeline.twoNN import twoNearestNeighbors
 
@@ -14,14 +15,14 @@ from Pipeline.twoNN import twoNearestNeighbors
 @pytest.fixture
 def data_Fig1():
     # Read dataset used for Figure 1 in the paper.
-    data_F1 = pd.read_csv("./benchmarks/Fig1.dat", sep=" ", header=None)
+    data_F1 = pd.read_csv(os.path.dirname(__file__) + "/benchmarks/Fig1.dat", sep=" ", header=None)
     return data_F1
     #return load_iris(return_X_y=True)
 
 @pytest.fixture
 def output_xy_test1():
     # Read benchmark output of the TWO-NN algorithm: x and y used for the fit over the whole data set
-    out_F1 = pd.read_csv("./benchmarks/output_xy_test1.csv", header=None)
+    out_F1 = pd.read_csv(os.path.dirname(__file__) + "/benchmarks/output_xy_test1.csv", header=None)
     out_F1.columns = ["x","y"]
     return out_F1
 

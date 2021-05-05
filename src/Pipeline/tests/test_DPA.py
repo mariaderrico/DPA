@@ -1,4 +1,5 @@
 import pytest
+import os
 import numpy as np
 import pandas as pd
 from pandas.util.testing import assert_frame_equal
@@ -13,35 +14,35 @@ from Pipeline.DPA import DensityPeakAdvanced
 @pytest.fixture
 def data_Fig1():
     # Read dataset used for Figure 1 in the paper.
-    data_F1 = pd.read_csv("./benchmarks/Fig1.dat", sep=" ", header=None)
+    data_F1 = pd.read_csv(os.path.dirname(__file__) + "/benchmarks/Fig1.dat", sep=" ", header=None)
     return data_F1
 
 
 @pytest.fixture
 def output_Fig1_g():
     # Read benchmark output of the DPA algorithm: right after the g calculation
-    out_F1 = pd.read_csv("./benchmarks/output_Fig1_g.csv", header=None)
+    out_F1 = pd.read_csv(os.path.dirname(__file__) + "/benchmarks/output_Fig1_g.csv", header=None)
     out_F1.columns = ["i", "g"]
     return out_F1
 
 @pytest.fixture
 def output_Fig1_borders():
     # Read benchmark output of the DPA algorithm: right after border calculation, after merging
-    out_F1 = pd.read_csv("./benchmarks/output_Fig1_borders.csv", header=None)
+    out_F1 = pd.read_csv(os.path.dirname(__file__) + "/benchmarks/output_Fig1_borders.csv", header=None)
     out_F1.columns = ["i", "j", "rho_b", "err_rho_b"]
     return out_F1
 
 @pytest.fixture
 def output_Fig1_labels():
     # Read benchmark final output of the DPA algorithm
-    out_F1 = pd.read_csv("./benchmarks/output_Fig1_labels.csv", header=None)
+    out_F1 = pd.read_csv(os.path.dirname(__file__) + "/benchmarks/output_Fig1_labels.csv", header=None)
     out_F1.columns = ["clu"]
     return out_F1
 
 @pytest.fixture
 def output_Fig1_labelsHalos():
     # Read benchmark final output of the DPA algorithm
-    out_F1 = pd.read_csv("./benchmarks/output_Fig1_labelsHalos.csv", header=None)
+    out_F1 = pd.read_csv(os.path.dirname(__file__) + "/benchmarks/output_Fig1_labelsHalos.csv", header=None)
     out_F1.columns = ["clu"]
     return out_F1
 
