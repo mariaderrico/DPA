@@ -20,13 +20,11 @@ jobs:
       uses: actions/setup-python@v2
       with:
         python-version: 3.7
-    - name: Install DPA and dependencies
+    - name: Install DPA
       run: |
         python -m pip install --upgrade pip
         . compile.sh
-        pip install pytest
+        pip install -e .[tests]
     - name: Test with pytest
       run: |
-        cd ./Pipeline/tests
-        pytest test_common.py
-        pytest test_DPA.py
+        pytest --ignore=src/Pipeline/tests/test_PAk.py
