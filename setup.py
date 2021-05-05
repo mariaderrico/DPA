@@ -3,14 +3,23 @@
 
 import codecs
 import os
-#import numpy 
+import numpy 
 from glob import glob
 from os.path import basename, dirname, join, relpath, splitext
-
-
 from setuptools import find_packages, setup, Extension
-#from Cython.Build import cythonize
-#numpy_include_dir = numpy.get_include()
+import warnings
+
+try:
+    from Cython.Build import cythonize
+    HAVE_CYTHON = True
+except ImportError as e:
+    warnings.warn(e.args[0])
+    HAVE_CYTHON = False
+
+if not HAVE_CYTHON:
+    warnings.warn('Cython is required in order to build the DPApipeline package')
+    raise ImportError('Cython not found! Please install cython and try again')
+
 
 # get __version__ from _version.py
 for root, _, _ in os.walk('src'):
@@ -39,7 +48,6 @@ CLASSIFIERS = ['Intended Audience :: Science/Research',
                'Programming Language :: Python :: 3.5',
                'Programming Language :: Python :: 3.6',
                'Programming Language :: Python :: 3.7']
-
 EXTRAS_REQUIRE = {
     'tests': [
         'pytest',
@@ -52,6 +60,11 @@ EXTRAS_REQUIRE = {
         'matplotlib'
     ]
 }
+EXTENSIONS = [Extension(splitext(relpath(path, 'src').replace(os.sep, '.'))[0],
+                 sources=[path],
+                 include_dirs=[numpy.get_include()])
+             for root, _, _ in os.walk('src')
+             for path in glob(join(root, '*.pyx'))]
 
 setup(name=DISTNAME,
       description=DESCRIPTION,
@@ -65,5 +78,5 @@ setup(name=DISTNAME,
       package_dir={'': 'src'},
       py_modules=[splitext(basename(path))[0] for path in glob('src/*.py')],
       install_requires=INSTALL_REQUIRES,
-      extras_require=EXTRAS_REQUIRE)
-      #ext_modules = cythonize(EXTENSIONS))
+      extras_require=EXTRAS_REQUIRE,
+      ext_modules = cythonize(EXTENSIONS))
