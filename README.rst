@@ -30,45 +30,41 @@ Top-level directory layout
 ::
 
     .
-    |-- DP/                              # Python implementation of the Density Peaks clustering.
-    |-- docs/                            # Documentation files. 
+    |-- DP/                              # Auxiliary package with the DP clustering implementation.
+    |-- docs/                            # Documentation files.
     |-- Examples/                        # Auxiliary scripts for the examples generations.
-    |-- Pipeline/                        # Source files for DPA, PAk and twoNN algorithms.
     |-- DPA_analysis.ipynb               # Use-case example for DPA.
     |-- DPA_comparison-all.ipynb         # Performance comparison with other clustering methods.
     |-- README.rst
-    |-- requirements.txt
-    |-- config.sh
+    |-- compile.sh
     |-- setup.py
-
+    |-- src/                             # Source files for DPA, PAk and twoNN algorithms.
 
 
 Source files
 ------------
 
-The source Python codes are stored inside the ``Pipeline`` folder::
-
-    cd Pipeline
-    ls -l
+The source Python codes are stored inside the ``src`` folder.
 
 ::
 
     .
     |-- ...
-    |-- Pipeline/
-    |   |-- __init__.py
-    |   |-- DPA.py           # Python module implementing the DPA 
-    |   |                    # clustering algorithm.
-    |   |
-    |   |-- _DPA.pyx         # Cython extension of the DPA module.
-    |   |
-    |   |-- PAk.py           # Python module implementing the PAk 
-    |   |                    # density estimator.
-    |   |
-    |   |-- _PAk.pyx         # Cython extension of the PAk module.
-    |   |                    
-    |   |-- twoNN.py         # Python module implementing the TWO-NN
-    |                        # algorithm for the ID calculation.                     
+    |-- src/
+    |   |-- Pipeline/
+    |       |-- __init__.py
+    |       |-- DPA.py           # Python module implementing the DPA
+    |       |                    # clustering algorithm.
+    |       |
+    |       |-- _DPA.pyx         # Cython extension of the DPA module.
+    |       |
+    |       |-- PAk.py           # Python module implementing the PAk
+    |       |                    # density estimator.
+    |       |
+    |       |-- _PAk.pyx         # Cython extension of the PAk module.
+    |       |
+    |       |-- twoNN.py         # Python module implementing the TWO-NN
+    |                            # algorithm for the ID calculation.
     |
     |-- ...   
 
@@ -146,7 +142,7 @@ run the following commands to download the DPApipeline source code::
 Install DPA with the following commands::
 
     cd DPA
-    . compile.sh 
+    . compile.sh
 
 
 Note that it is possible to check which packages are installed with the ``pip freeze`` command.
