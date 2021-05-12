@@ -378,7 +378,7 @@ class DensityPeakAdvanced(ClusterMixin, BaseEstimator):
                                                  algorithm="auto", 
                                                 metric=self.metric, 
                                                 n_jobs=self.n_jobs).fit(X)
-                self.nn_distances_, nn_self.indices_ = nbrs.kneighbors(X) 
+                self.nn_distances_, self.nn_indices_ = nbrs.kneighbors(X) 
         elif self.density_algo == "PAk":
             # If the nearest neighbors matrix is precomputed:
             if self.nn_distances is not None and self.nn_indices is not None:
