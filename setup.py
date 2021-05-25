@@ -4,7 +4,7 @@
 import codecs
 import os
 import numpy 
-import matplotlib
+#import matplotlib
 from glob import glob
 from os.path import basename, dirname, join, relpath, splitext
 from setuptools import find_packages, setup, Extension
