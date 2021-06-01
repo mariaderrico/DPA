@@ -8,6 +8,9 @@
 
 import numpy as np
 import matplotlib.pyplot as plt
+from matplotlib import cm
+from matplotlib.colors import ListedColormap, LinearSegmentedColormap
+
 
 from sklearn.base import BaseEstimator, ClusterMixin, DensityMixin, ClassifierMixin, TransformerMixin
 from sklearn.utils.validation import check_X_y, check_array, check_is_fitted
@@ -562,8 +565,18 @@ class DensityPeakAdvanced(ClusterMixin, BaseEstimator):
             plt.plot([x1, x2], [ynew, ynew], color='k', linestyle='-', linewidth=2,zorder=zorder)
 
         zorder=zorder+1
-        plt.scatter (xs,ys,c=labels,s=100,zorder=zorder)
+        viridis = cm.get_cmap('viridis', Nclus)
+        #print(viridis.colors)
+        plt.scatter (xs,ys,c=labels,s=100,zorder=zorder,cmap="viridis")
         for i in range (Nclus):
             zorder=zorder+1
-            plt.annotate(labels[i],(xs[i],ys[i]),horizontalalignment='center',verticalalignment='center',zorder=zorder)
+            cc='k'
+            r=viridis.colors[labels[i]][0]
+            g=viridis.colors[labels[i]][1]
+            b=viridis.colors[labels[i]][2]
+            luma = 0.2126 * r + 0.7152 * g + 0.0722 * b
+            luma=luma*255
+            if (luma<156):
+                    cc='w'
+            plt.annotate(labels[i],(xs[i],ys[i]),horizontalalignment='center',verticalalignment='center',zorder=zorder,c=cc,weight='bold')
         plt.show()
