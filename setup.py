@@ -59,7 +59,7 @@ EXTRAS_REQUIRE = {
         'rinohtype==0.4.2',
         'rinoh-typeface-dejavuserif==0.1.1',
         'numpydoc',
-        'matplotlib'
+        'matplotlib',
         'scipy',
         'jupyter',
         'py-cpuinfo',
