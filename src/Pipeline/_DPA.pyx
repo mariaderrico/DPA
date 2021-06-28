@@ -1,3 +1,12 @@
+# !python
+# cython: boundscheck=False
+# cython: cdivision=False
+# cython: nonecheck=False
+# cython: wraparound=False
+# cython: profile=False
+# cython: annotation_typing=False
+# cython: infer_types=False
+
 # file '_DPA.pyx'. 
 # Non-parametric Density Peak clustering: 
 # Automatic topography of high-dimensional data sets 
@@ -6,12 +15,13 @@
 #
 # Licence: BSD 3 clause
 
+from libc.stdint cimport int32_t, int64_t
 import numpy as np
 cimport numpy as c_np
 import copy
 
 
-def get_centers(N, indices, k_hat, g):
+cpdef list get_centers(int N, int64_t[:,:] indices, list k_hat, list g):
     cdef int i, j, c
     cdef list centers = []
     # Criterion 1 from Heuristic 1
@@ -31,15 +41,15 @@ def get_centers(N, indices, k_hat, g):
                 break
     return centers
 
-def initial_assignment(g, N, indices, centers):
-    cdef long c, i, el, k
-    cdef c_np.ndarray[long, ndim=1] ig_sort = np.argsort([-x for x in g])
+cpdef c_np.ndarray[int32_t, ndim=1] initial_assignment(list g, int N, int64_t[:,:] indices, list centers):
+    cdef int64_t c, i, el, k
+    cdef c_np.ndarray[int64_t, ndim=1] ig_sort = np.argsort([-x for x in g])
 
     # Assign points to clusters
     #--------------------------
     # Assign all the points that are not centers to the same cluster as the nearest point with higher g. 
     # This assignation is performed in order of decreasing g
-    cdef c_np.ndarray[long, ndim=1] clu_labels = np.zeros(N,dtype=int)-1
+    cdef c_np.ndarray[int32_t, ndim=1] clu_labels = np.zeros(N,dtype='int32')-1
     for c in centers:
         clu_labels[c] = centers.index(c)
     for i in range(0,N):
@@ -51,7 +61,7 @@ def initial_assignment(g, N, indices, centers):
     return clu_labels
 
 
-def get_borders( N, k_hat, indices, clu_labels, Nclus, g, densities, err_densities, Z, centers):
+cpdef tuple get_borders(int N, list k_hat, int64_t[:,:] indices, c_np.ndarray[int32_t, ndim=1] clu_labels, int Nclus, list g, list densities, list err_densities, int Z, list centers):
     cdef dict border_dict = {}
     #cdef dict border_kmax = {}
     cdef dict g_saddle = {}
@@ -102,8 +112,8 @@ def get_borders( N, k_hat, indices, clu_labels, Nclus, g, densities, err_densiti
                         pass
                             
     # Fill in the border density matrix
-    cdef c_np.ndarray[double, ndim=2] Rho_bord = np.zeros((Nclus,Nclus),dtype=float)
-    cdef c_np.ndarray[double, ndim=2] Rho_bord_err = np.zeros((Nclus,Nclus),dtype=float)
+    cdef double[:,:] Rho_bord = np.zeros((Nclus,Nclus),dtype=np.double)
+    cdef double[:,:] Rho_bord_err = np.zeros((Nclus,Nclus),dtype=np.double)
     for c,cp in g_saddle.keys():
         i = g_saddle[(c,cp)][0]
         Rho_bord[c][cp] = densities[i]
@@ -206,9 +216,9 @@ def get_borders( N, k_hat, indices, clu_labels, Nclus, g, densities, err_densiti
 
 
     # Update topography
-    cdef c_np.ndarray[double, ndim=1] min_rho_bord = np.zeros(Nclus_m)
-    cdef c_np.ndarray[double, ndim=2] Rho_bord_m = np.zeros((Nclus_m,Nclus_m),dtype=float)
-    cdef c_np.ndarray[double, ndim=2] Rho_bord_err_m = np.zeros((Nclus_m,Nclus_m),dtype=float)
+    cdef double[:] min_rho_bord = np.zeros(Nclus_m)
+    cdef double[:,:] Rho_bord_m = np.zeros((Nclus_m,Nclus_m),dtype=np.double)
+    cdef double[:,:] Rho_bord_err_m = np.zeros((Nclus_m,Nclus_m),dtype=np.double)
     for c,cp in g_saddle.keys():
         i = g_saddle[(c,cp)][0]
         c = D[c]
@@ -230,12 +240,12 @@ def get_borders( N, k_hat, indices, clu_labels, Nclus, g, densities, err_densiti
         Rho_bord_err_m[c][c] = 0
 
     # Halos
-    cdef c_np.ndarray[long, ndim=1] clu_halos = copy.deepcopy(clu_labels)
+    cdef c_np.ndarray[int32_t, ndim=1] clu_halos = copy.deepcopy(clu_labels)
     clu_halos = find_halos(min_rho_bord, clu_halos, densities)
 
     return Rho_bord_m, Rho_bord_err_m, clu_labels, clu_halos, Nclus_m, centers_m
 
-def find_halos(min_rho_bord, clu_halos, densities):
+cdef c_np.ndarray[int32_t, ndim=1] find_halos(double[:] min_rho_bord, c_np.ndarray[int32_t, ndim=1] clu_halos, list densities):
     cdef int i
     for i in range(len(densities)):
         if densities[i]<min_rho_bord[clu_halos[i]] and min_rho_bord[clu_halos[i]]>0:

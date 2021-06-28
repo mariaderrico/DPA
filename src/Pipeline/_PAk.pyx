@@ -12,6 +12,7 @@
 # Licence: BSD 3 clause
 
 from libc.math cimport log, sqrt, exp, lgamma, pi, pow
+from libc.stdint cimport int32_t, int64_t
 import sys
 import numpy as np
 cimport cython
@@ -29,7 +30,7 @@ cdef double get_volume(double V1, double dist, int dim):
 
 cdef tuple ratio_test(int i, int N, double V1, dict V_dic, int dim,
                       double[:,:]  distances, int k_max,
-                      double D_thr, long[:,:] indices):
+                      double D_thr, int64_t[:,:] indices):
     # Compute the volume of the dim-sphere with unitary radius
     cdef float Dk, vi, vj
     cdef int k, j 
@@ -81,7 +82,7 @@ cdef tuple ratio_test(int i, int N, double V1, dict V_dic, int dim,
 
 
 cpdef tuple get_densities(int dim, double[:,:] distances,
-                          int k_max, double D_thr, long[:,:] indices):
+                          int k_max, double D_thr, int64_t[:,:] indices):
     """Main function implementing the Pointwise Adaptive k-NN density estimator.
 
     Parameters
