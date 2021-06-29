@@ -61,7 +61,7 @@ cpdef c_np.ndarray[int32_t, ndim=1] initial_assignment(list g, int N, int64_t[:,
     return clu_labels
 
 
-cpdef tuple get_borders(int N, list k_hat, int64_t[:,:] indices, c_np.ndarray[int32_t, ndim=1] clu_labels, int Nclus, list g, list densities, list err_densities, int Z, list centers):
+cpdef tuple get_borders(int N, list k_hat, int64_t[:,:] indices, c_np.ndarray[int32_t, ndim=1] clu_labels, int Nclus, list g, list densities, list err_densities, float Z, list centers):
     cdef dict border_dict = {}
     #cdef dict border_kmax = {}
     cdef dict g_saddle = {}
