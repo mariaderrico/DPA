@@ -1,11 +1,5 @@
-============
-Introduction
-============
-
-.. include:: ../README.rst
-
 ================
-Pipeline package
+Package modules
 ================
 
 .. include:: Pipeline.rst
