@@ -4,12 +4,13 @@ Density Peaks Advanced clustering
 Status of the `scikit-learn`_ compatibility test:
 
 .. image:: https://github.com/mariaderrico/DPA/actions/workflows/runpytest.yml/badge.svg?branch=master
-   :alt: scikit-learn compatibility test status on Github Actions
+   :alt: scikit-learn compatibility test status on GitHub Actions
    :target: https://github.com/mariaderrico/DPA/actions/workflows/runpytest.yml
 
 
 
 The DPA package implements the Density Peaks Advanced (DPA) clustering algorithm as introduced in the paper "Automatic topography of high-dimensional data sets by non-parametric Density Peak clustering", published on `M. d'Errico, E. Facco, A. Laio, A. Rodriguez, Information Sciences, Volume 560, June 2021, 476-492`_  (also available on `arXiv`_).
+
 
 The package offers the following features:
 
@@ -79,17 +80,24 @@ The ``DPApipeline.pdf`` is in the ``docs/_build/rinioh`` folder.
 Jupyter notebooks
 -----------------
 
-Examples of how-to run the ``DPA``, ```PAk`` and ```twoNN`` modules are provided as Jupyter notebook in ``DPA_analysis.ipynb``. Additional useful use-cases are available in ``DPA_comparison-all.ipynb``, including a performance comparison with the following clustering methods: Bayesian Gaussian Mixture, HDBSCAN, Spectral Clustering and Density Peaks.
+Examples of how-to run the ``DPA``, ``PAk`` and ``twoNN`` modules are provided as Jupyter notebook in ``DPA_analysis.ipynb``. Additional useful use-cases are available in ``DPA_comparison-all.ipynb``, which include a performance comparison with the following clustering methods: Bayesian Gaussian Mixture, HDBSCAN, Spectral Clustering and Density Peaks.
 
+Both jupyter notebooks are also available as Python script (saved using `jupytext`_) in the ``jupytext`` folder.
 ::
 
     .
     |-- ...
     |-- DPA_analysis.ipynb               # Use-case example for DPA.
-    |-- DPA_comparison-all.ipynb         # Performance comparison with other clustering methods.
+    |-- DPA_comparison-all.ipynb         # Performance comparison with
+    |                                    # other clustering methods.
     |    
-    |-- ...                                        
-     
+    |-- ...
+    |-- jupytext/
+    |   |-- DPA_analysis.py              # DPA_analysis.ipynb saved as
+    |   |                                # Python script.
+    |   |-- DPA_comparison-all.py        # DPA_comparison-all.ipynb
+    |                                    # saved as Python script.
+
 
 Getting started
 ---------------
@@ -134,8 +142,24 @@ to list the available environments you can type ``conda info --envs``, and to de
 Installation
 ------------
 
-Assuming you already have the Python virtual enviroment installed and activated on your machine, 
-run the following commands to download the DPApipeline source code::
+Install required dependencies
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+The DPA package depends on ``easycython``, that can be installed using ``conda`` or ``pip``.
+Note that it is possible to check which packages are installed with the ``pip freeze`` command.
+
+
+Installing released code from GitHub
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+Install the latest version from the GitHub repository via::
+
+    pip install git+https://github.com/mariaderrico/DPA
+
+Installing development code from GitHub
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+Run the following commands to download the DPA source code::
 
     git clone https://github.com/mariaderrico/DPA.git
 
@@ -145,13 +169,7 @@ Install DPA with the following commands::
     . compile.sh
 
 
-Note that it is possible to check which packages are installed with the ``pip freeze`` command.
 
-
-Quickstart
-^^^^^^^^^^
-
-A use-case example is provided in the DPA_analysis.ipynb jupyter notebook.
 
 
 .. References
@@ -162,6 +180,7 @@ A use-case example is provided in the DPA_analysis.ipynb jupyter notebook.
 .. _`Computing the free energy without collective variables`: https://pubs.acs.org/doi/full/10.1021/acs.jctc.7b00916 
 .. _`Estimating the intrinsic dimension of datasets by a minimal neighborhood information`: https://export.arxiv.org/pdf/1803.06992 
 .. _`Clustering by fast search and find of density peaks`: http://science.sciencemag.org/content/344/6191/1492.full.pdf
-.. _`github DPApipeline repository`: https://github.com/mariaderrico/DPA.git
+.. _`github DPA repository`: https://github.com/mariaderrico/DPA.git
 .. _`Anaconda`: https://www.anaconda.com/download/#windows
 .. _`git`: https://git-scm.com
+.. _`jupytext`: https://pypi.org/project/jupytext/
