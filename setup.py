@@ -53,11 +53,10 @@ EXTRAS_REQUIRE = {
         'pytest-cov',
         'pandas'],
     'docs': [
-        'sphinx==1.5.6',
+        'sphinx>=1.8',
         'sphinx-gallery',
         'sphinx_rtd_theme',
-        'rinohtype==0.4.2',
-        'rinoh-typeface-dejavuserif==0.1.1',
+        'nbsphinx_link',
         'numpydoc',
         'matplotlib',
         'scipy',
