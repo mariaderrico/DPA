@@ -267,7 +267,7 @@ class DensityPeakAdvanced(ClusterMixin, BaseEstimator):
     References
     ----------
     
-    M. d’Errico, E. Facco, A. Laio and A. Rodriguez, Automatic topography of high-dimensional data sets by non-parametric Density Peak clustering (2018) https://arxiv.org/abs/1802.10549
+    M. d'Errico, E. Facco, A. Laio, A. Rodriguez, Information Sciences, Volume 560, June 2021, 476-492, https://www.sciencedirect.com/science/article/pii/S0020025521000116?dgcid=author (also available on arXiv: https://arxiv.org/abs/1802.10549)
     """
 
     def __init__(self, Z=1, metric="euclidean", densities=None, err_densities=None, k_hat=None,

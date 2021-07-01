@@ -73,9 +73,7 @@ Documentation files
 -------------------
 
 Full documentation about the Python codes developed and the how-to instructions is created in the ``docs`` folder using `Sphinx`.
-The documentation in HTML format can be found in ``docs/_build/html/index.html``.
-The ``DPApipeline.pdf`` is in the ``docs/_build/rinioh`` folder.
-
+Complete documentation for DPA is available on the  `Read The Docs <https://dpaclustering.readthedocs.org>`_ website.
 
 Jupyter notebooks
 -----------------
@@ -169,6 +167,29 @@ Install DPA with the following commands::
     . compile.sh
 
 
+
+Citing
+------
+
+If you have used this codebase in a scientific publication and wish to cite the algorithm, please cite our paper in Information Sciences.
+
+
+    `M. d'Errico, E. Facco, A. Laio, A. Rodriguez, Information Sciences, Volume 560, June 2021, 476-492`_
+
+
+.. code:: bibtex
+
+    @article{DERRICO2021476,
+      title = {Automatic topography of high-dimensional data sets by non-parametric density peak clustering},
+      journal = {Information Sciences},
+      volume = {560},
+      pages = {476-492},
+      year = {2021},
+      issn = {0020-0255},
+      doi = {https://doi.org/10.1016/j.ins.2021.01.010},
+      url = {https://www.sciencedirect.com/science/article/pii/S0020025521000116},
+      author = {Maria d’Errico and Elena Facco and Alessandro Laio and Alex Rodriguez},
+      }
 
 
 

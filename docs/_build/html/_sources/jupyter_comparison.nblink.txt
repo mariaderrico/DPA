@@ -1,4 +1,0 @@
-{
-    "path": "../DPA_comparison-all.ipynb"
-}
-
