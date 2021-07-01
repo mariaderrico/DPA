@@ -82,6 +82,6 @@ setup(name=DISTNAME,
       packages=find_packages('src')+find_packages('Examples')+find_packages('DP'),
       package_dir={'': 'src'},
       py_modules=[splitext(basename(path))[0] for path in glob('src/*.py')],
-      install_requires=['scikit-learn==0.24.*'],
+      install_requires=['scikit-learn==0.24.*', 'matplotlib'],
       extras_require=EXTRAS_REQUIRE,
       ext_modules = cythonize(EXTENSIONS))
