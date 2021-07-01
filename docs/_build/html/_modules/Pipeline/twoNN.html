@@ -53,17 +53,17 @@
 
 <span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
 <span class="kn">import</span> <span class="nn">heapq</span>
-<span class="kn">from</span> <span class="nn">sklearn.base</span> <span class="k">import</span> <span class="n">BaseEstimator</span><span class="p">,</span> <span class="n">ClassifierMixin</span><span class="p">,</span> <span class="n">TransformerMixin</span><span class="p">,</span> <span class="n">DensityMixin</span>
-<span class="kn">from</span> <span class="nn">sklearn.utils.validation</span> <span class="k">import</span> <span class="n">check_X_y</span><span class="p">,</span> <span class="n">check_array</span><span class="p">,</span> <span class="n">check_is_fitted</span>
-<span class="kn">from</span> <span class="nn">sklearn.utils.multiclass</span> <span class="k">import</span> <span class="n">unique_labels</span>
-<span class="kn">from</span> <span class="nn">sklearn.metrics</span> <span class="k">import</span> <span class="n">euclidean_distances</span>
-<span class="kn">from</span> <span class="nn">sklearn.neighbors</span> <span class="k">import</span> <span class="n">NearestNeighbors</span>
-<span class="kn">from</span> <span class="nn">math</span> <span class="k">import</span> <span class="n">log</span><span class="p">,</span> <span class="n">sqrt</span><span class="p">,</span> <span class="n">exp</span><span class="p">,</span> <span class="n">lgamma</span><span class="p">,</span> <span class="n">pi</span><span class="p">,</span> <span class="nb">pow</span>
-<span class="kn">from</span> <span class="nn">sklearn.linear_model</span> <span class="k">import</span> <span class="n">LinearRegression</span>
+<span class="kn">from</span> <span class="nn">sklearn.base</span> <span class="kn">import</span> <span class="n">BaseEstimator</span><span class="p">,</span> <span class="n">ClassifierMixin</span><span class="p">,</span> <span class="n">TransformerMixin</span><span class="p">,</span> <span class="n">DensityMixin</span>
+<span class="kn">from</span> <span class="nn">sklearn.utils.validation</span> <span class="kn">import</span> <span class="n">check_X_y</span><span class="p">,</span> <span class="n">check_array</span><span class="p">,</span> <span class="n">check_is_fitted</span>
+<span class="kn">from</span> <span class="nn">sklearn.utils.multiclass</span> <span class="kn">import</span> <span class="n">unique_labels</span>
+<span class="kn">from</span> <span class="nn">sklearn.metrics</span> <span class="kn">import</span> <span class="n">euclidean_distances</span>
+<span class="kn">from</span> <span class="nn">sklearn.neighbors</span> <span class="kn">import</span> <span class="n">NearestNeighbors</span>
+<span class="kn">from</span> <span class="nn">math</span> <span class="kn">import</span> <span class="n">log</span><span class="p">,</span> <span class="n">sqrt</span><span class="p">,</span> <span class="n">exp</span><span class="p">,</span> <span class="n">lgamma</span><span class="p">,</span> <span class="n">pi</span><span class="p">,</span> <span class="nb">pow</span>
+<span class="kn">from</span> <span class="nn">sklearn.linear_model</span> <span class="kn">import</span> <span class="n">LinearRegression</span>
 
-<span class="n">VALID_METRIC</span> <span class="o">=</span> <span class="p">[</span><span class="s1">&#39;precomputed&#39;</span><span class="p">,</span> <span class="s1">&#39;euclidean&#39;</span><span class="p">]</span>
+<span class="n">VALID_METRIC</span> <span class="o">=</span> <span class="p">[</span><span class="s1">&#39;precomputed&#39;</span><span class="p">,</span> <span class="s1">&#39;euclidean&#39;</span><span class="p">,</span><span class="s1">&#39;cosine&#39;</span><span class="p">]</span>
 
-<div class="viewcode-block" id="_twoNearestNeighbors"><a class="viewcode-back" href="../../code.html#Pipeline.twoNN._twoNearestNeighbors">[docs]</a><span class="k">def</span> <span class="nf">_twoNearestNeighbors</span><span class="p">(</span><span class="n">distances</span><span class="p">,</span> <span class="n">blockAn</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">block_ratio</span><span class="o">=</span><span class="mi">20</span><span class="p">,</span> <span class="n">frac</span><span class="o">=</span><span class="mi">1</span><span class="p">):</span>
+<div class="viewcode-block" id="_twoNearestNeighbors"><a class="viewcode-back" href="../../modules.html#Pipeline.twoNN._twoNearestNeighbors">[docs]</a><span class="k">def</span> <span class="nf">_twoNearestNeighbors</span><span class="p">(</span><span class="n">distances</span><span class="p">,</span> <span class="n">blockAn</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">block_ratio</span><span class="o">=</span><span class="mi">20</span><span class="p">,</span> <span class="n">frac</span><span class="o">=</span><span class="mi">1</span><span class="p">):</span>
     <span class="sd">&quot;&quot;&quot;Main function for the TWO-NN estimator.</span>
 
 <span class="sd">    Parameters</span>
@@ -119,7 +119,7 @@
 
 
 
-<div class="viewcode-block" id="twoNearestNeighbors"><a class="viewcode-back" href="../../code.html#Pipeline.twoNN.twoNearestNeighbors">[docs]</a><span class="k">class</span> <span class="nc">twoNearestNeighbors</span><span class="p">(</span><span class="n">BaseEstimator</span><span class="p">,</span> <span class="n">DensityMixin</span><span class="p">):</span>
+<div class="viewcode-block" id="twoNearestNeighbors"><a class="viewcode-back" href="../../modules.html#Pipeline.twoNN.twoNearestNeighbors">[docs]</a><span class="k">class</span> <span class="nc">twoNearestNeighbors</span><span class="p">(</span><span class="n">BaseEstimator</span><span class="p">):</span> 
     <span class="sd">&quot;&quot;&quot;Class definition for TWO-NN: Intrinsic dimension estimator by a minimal neighborhood information.</span>
 
 <span class="sd">    The TWO-NN estimator uses only the distances to the first two nearest neighbors of each point.</span>
@@ -131,7 +131,7 @@
 <span class="sd">        The distance metric to use. </span>
 <span class="sd">        If metric is a string, it must be one of the options allowed by </span>
 <span class="sd">        scipy.spatial.distance.pdist for its metric parameter, or a metric listed in </span>
-<span class="sd">        :obj:`VALID_METRIC = [precomputed, euclidean]`. If metric is ``precomputed``, X is assumed to</span>
+<span class="sd">        :obj:`VALID_METRIC = [precomputed, euclidean,cosine]`. If metric is ``precomputed``, X is assumed to</span>
 <span class="sd">        be a distance matrix. Alternatively, if metric is a callable function, it is </span>
 <span class="sd">        called on each pair of instances (rows) and the resulting value recorded. The </span>
 <span class="sd">        callable should take two arrays from X as input and return a value indicating </span>
@@ -156,6 +156,19 @@
 <span class="sd">        ``-1`` means using all processors. See :term:`Glossary &lt;n_jobs&gt;`</span>
 <span class="sd">        for more details.</span>
 
+<span class="sd">    affinity : string or callable, default &#39;precomputed&#39;</span>
+<span class="sd">        How to construct the affinity matrix.</span>
+<span class="sd">         - ``nearest_neighbors`` : construct the affinity matrix by computing a</span>
+<span class="sd">           graph of nearest neighbors.</span>
+<span class="sd">         - ``rbf`` : construct the affinity matrix using a radial basis function</span>
+<span class="sd">           (RBF) kernel.</span>
+<span class="sd">         - ``precomputed`` : interpret ``X`` as a precomputed affinity matrix.</span>
+<span class="sd">         - ``precomputed_nearest_neighbors`` : interpret ``X`` as a sparse graph</span>
+<span class="sd">           of precomputed nearest neighbors, and constructs the affinity matrix</span>
+<span class="sd">           by selecting the ``n_neighbors`` nearest neighbors.</span>
+<span class="sd">         - one of the kernels supported by</span>
+<span class="sd">           :func:`~sklearn.metrics.pairwise_kernels`.</span>
+
 <span class="sd">    Attributes</span>
 <span class="sd">    ----------</span>
 <span class="sd">    dim_ : int</span>
@@ -169,25 +182,27 @@
 
 
 <span class="sd">    &quot;&quot;&quot;</span>
-    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">metric</span><span class="o">=</span><span class="s1">&#39;euclidean&#39;</span><span class="p">,</span>  <span class="n">blockAn</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">block_ratio</span><span class="o">=</span><span class="mi">20</span><span class="p">,</span> <span class="n">frac</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">n_jobs</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">metric</span><span class="o">=</span><span class="s1">&#39;euclidean&#39;</span><span class="p">,</span>  <span class="n">blockAn</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">block_ratio</span><span class="o">=</span><span class="mi">20</span><span class="p">,</span> <span class="n">frac</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">n_jobs</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">affinity</span><span class="o">=</span><span class="s2">&quot;precomputed&quot;</span><span class="p">):</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">metric</span> <span class="o">=</span> <span class="s1">&#39;euclidean&#39;</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">blockAn</span> <span class="o">=</span> <span class="n">blockAn</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">block_ratio</span> <span class="o">=</span> <span class="n">block_ratio</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">frac</span> <span class="o">=</span> <span class="n">frac</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">n_jobs</span> <span class="o">=</span> <span class="n">n_jobs</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">affinity</span> <span class="o">=</span> <span class="n">affinity</span>
 
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">frac</span> <span class="o">&gt;</span> <span class="mi">1</span><span class="p">:</span>
             <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;frac should be between 0 and 1.&quot;</span><span class="p">)</span>
     
     
-<div class="viewcode-block" id="twoNearestNeighbors.fit"><a class="viewcode-back" href="../../code.html#Pipeline.twoNN.twoNearestNeighbors.fit">[docs]</a>    <span class="k">def</span> <span class="nf">fit</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">X</span><span class="p">,</span> <span class="n">y</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+<div class="viewcode-block" id="twoNearestNeighbors.fit"><a class="viewcode-back" href="../../modules.html#Pipeline.twoNN.twoNearestNeighbors.fit">[docs]</a>    <span class="k">def</span> <span class="nf">fit</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">X</span><span class="p">,</span> <span class="n">y</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;A reference implementation of a fitting function.</span>
 
 <span class="sd">        Parameters</span>
 <span class="sd">        ----------</span>
 <span class="sd">        X : array [n_samples, n_samples] if metric == ``precomputed``, or,</span>
 <span class="sd">            [n_samples, n_features] otherwise</span>
-<span class="sd">            The input samples.</span>
+<span class="sd">            The input samples. Similarities / affinities between</span>
+<span class="sd">            instances if ``affinity=&#39;precomputed&#39;``. </span>
 
 <span class="sd">        y : Ignored</span>
 <span class="sd">            Not used, present here for API consistency by convention.</span>
@@ -198,12 +213,24 @@
 <span class="sd">            Returns self.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="c1"># Input validation</span>
-        <span class="n">X</span> <span class="o">=</span> <span class="n">check_array</span><span class="p">(</span><span class="n">X</span><span class="p">,</span> <span class="n">order</span><span class="o">=</span><span class="s1">&#39;C&#39;</span><span class="p">,</span> <span class="n">accept_sparse</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+        <span class="n">X</span> <span class="o">=</span> <span class="n">check_array</span><span class="p">(</span><span class="n">X</span><span class="p">,</span> <span class="n">accept_sparse</span><span class="o">=</span><span class="p">[</span><span class="s1">&#39;csr&#39;</span><span class="p">,</span> <span class="s1">&#39;csc&#39;</span><span class="p">,</span> <span class="s1">&#39;coo&#39;</span><span class="p">],</span>
+                        <span class="n">dtype</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">float64</span><span class="p">,</span> <span class="n">ensure_min_samples</span><span class="o">=</span><span class="mi">2</span><span class="p">)</span>
 
-        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">block_ratio</span> <span class="o">&gt;=</span> <span class="n">X</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]:</span>
-            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;block_ratio is larger than the sample size, the minimum size for block analysis </span><span class="se">\</span>
-<span class="s2">                        would be zero. Please set a lower value.&quot;</span><span class="p">)</span>
+        <span class="n">allow_squared</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">affinity</span> <span class="ow">in</span> <span class="p">[</span><span class="s2">&quot;precomputed&quot;</span><span class="p">,</span>
+                                          <span class="s2">&quot;precomputed_nearest_neighbors&quot;</span><span class="p">]</span>
+        <span class="k">if</span> <span class="n">X</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">==</span> <span class="n">X</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="ow">and</span> <span class="ow">not</span> <span class="n">allow_squared</span><span class="p">:</span>
+            <span class="n">warnings</span><span class="o">.</span><span class="n">warn</span><span class="p">(</span><span class="s2">&quot;The twoNN API has changed. ``fit``&quot;</span>
+                          <span class="s2">&quot;now constructs an affinity matrix from data. To use&quot;</span>
+                          <span class="s2">&quot; a custom affinity matrix, &quot;</span>
+                          <span class="s2">&quot;set ``affinity=precomputed``.&quot;</span><span class="p">)</span>
 
+
+        <span class="c1">#if self.block_ratio &gt;= X.shape[0]:</span>
+        <span class="c1">#     # TOBE implemented</span>
+        <span class="c1">#     pass</span>
+        <span class="c1">#     #raise ValueError(&quot;block_ratio is larger than the sample size, the minimum size for block analysis \</span>
+        <span class="c1">#     #           would be zero. Please set a lower value.&quot;)</span>
+        
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">metric</span> <span class="o">==</span> <span class="s2">&quot;precomputed&quot;</span><span class="p">:</span>
             <span class="c1"># TODO: handle identical distances</span>
             <span class="n">nbrs</span> <span class="o">=</span> <span class="n">NearestNeighbors</span><span class="p">(</span><span class="n">n_neighbors</span><span class="o">=</span><span class="mi">3</span><span class="p">,</span> <span class="c1"># Only two neighbors used; the point i is counted in its neighborhood</span>
@@ -212,7 +239,8 @@
                                         <span class="n">n_jobs</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">n_jobs</span><span class="p">)</span><span class="o">.</span><span class="n">fit</span><span class="p">(</span><span class="n">X</span><span class="p">)</span>
         <span class="k">else</span><span class="p">:</span>
             <span class="c1"># Remove duplicates coordinates</span>
-            <span class="n">X</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">unique</span><span class="p">(</span><span class="n">X</span><span class="p">,</span> <span class="n">axis</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
+            <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">X</span><span class="p">)</span><span class="o">&gt;</span><span class="mi">0</span><span class="p">:</span>
+                <span class="n">X</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">unique</span><span class="p">(</span><span class="n">X</span><span class="p">,</span> <span class="n">axis</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
             <span class="n">nbrs</span> <span class="o">=</span> <span class="n">NearestNeighbors</span><span class="p">(</span><span class="n">n_neighbors</span><span class="o">=</span><span class="mi">3</span><span class="p">,</span> <span class="c1"># Only two neighbors used; the point i is counted in its neighborhood</span>
                                          <span class="n">algorithm</span><span class="o">=</span><span class="s2">&quot;auto&quot;</span><span class="p">,</span>
                                         <span class="n">metric</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">metric</span><span class="p">,</span> 

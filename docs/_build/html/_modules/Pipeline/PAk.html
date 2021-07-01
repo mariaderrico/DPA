@@ -52,20 +52,19 @@
 <span class="c1"># Licence: BSD 3 clause</span>
 
 <span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
-<span class="kn">from</span> <span class="nn">sklearn.base</span> <span class="k">import</span> <span class="n">BaseEstimator</span><span class="p">,</span> <span class="n">DensityMixin</span><span class="p">,</span> <span class="n">ClassifierMixin</span><span class="p">,</span> <span class="n">TransformerMixin</span>
-<span class="kn">from</span> <span class="nn">sklearn.utils.validation</span> <span class="k">import</span> <span class="n">check_X_y</span><span class="p">,</span> <span class="n">check_array</span><span class="p">,</span> <span class="n">check_is_fitted</span>
-<span class="kn">from</span> <span class="nn">sklearn.utils.multiclass</span> <span class="k">import</span> <span class="n">unique_labels</span>
-<span class="kn">from</span> <span class="nn">sklearn.metrics</span> <span class="k">import</span> <span class="n">euclidean_distances</span>
-<span class="kn">from</span> <span class="nn">sklearn.neighbors</span> <span class="k">import</span> <span class="n">NearestNeighbors</span>
-<span class="kn">from</span> <span class="nn">sklearn.neighbors</span> <span class="k">import</span> <span class="n">kneighbors_graph</span>
-<span class="kn">from</span> <span class="nn">math</span> <span class="k">import</span> <span class="n">log</span><span class="p">,</span> <span class="n">sqrt</span><span class="p">,</span> <span class="n">exp</span><span class="p">,</span> <span class="n">lgamma</span><span class="p">,</span> <span class="n">pi</span><span class="p">,</span> <span class="nb">pow</span>
-<span class="kn">from</span> <span class="nn">Pipeline.twoNN</span> <span class="k">import</span> <span class="n">twoNearestNeighbors</span>
-<span class="kn">from</span> <span class="nn">Pipeline</span> <span class="k">import</span> <span class="n">_PAk</span>
+<span class="kn">from</span> <span class="nn">sklearn.base</span> <span class="kn">import</span> <span class="n">BaseEstimator</span><span class="p">,</span> <span class="n">DensityMixin</span><span class="p">,</span> <span class="n">ClassifierMixin</span><span class="p">,</span> <span class="n">TransformerMixin</span>
+<span class="kn">from</span> <span class="nn">sklearn.utils.validation</span> <span class="kn">import</span> <span class="n">check_X_y</span><span class="p">,</span> <span class="n">check_array</span><span class="p">,</span> <span class="n">check_is_fitted</span>
+<span class="kn">from</span> <span class="nn">sklearn.utils.multiclass</span> <span class="kn">import</span> <span class="n">unique_labels</span>
+<span class="kn">from</span> <span class="nn">sklearn.metrics</span> <span class="kn">import</span> <span class="n">euclidean_distances</span>
+<span class="kn">from</span> <span class="nn">sklearn.neighbors</span> <span class="kn">import</span> <span class="n">NearestNeighbors</span>
+<span class="kn">from</span> <span class="nn">sklearn.neighbors</span> <span class="kn">import</span> <span class="n">kneighbors_graph</span>
+<span class="kn">from</span> <span class="nn">math</span> <span class="kn">import</span> <span class="n">log</span><span class="p">,</span> <span class="n">sqrt</span><span class="p">,</span> <span class="n">exp</span><span class="p">,</span> <span class="n">lgamma</span><span class="p">,</span> <span class="n">pi</span><span class="p">,</span> <span class="nb">pow</span>
+<span class="kn">from</span> <span class="nn">Pipeline.twoNN</span> <span class="kn">import</span> <span class="n">twoNearestNeighbors</span>
 
-<span class="n">VALID_METRIC</span> <span class="o">=</span> <span class="p">[</span><span class="s1">&#39;precomputed&#39;</span><span class="p">,</span> <span class="s1">&#39;euclidean&#39;</span><span class="p">]</span>
+<span class="n">VALID_METRIC</span> <span class="o">=</span> <span class="p">[</span><span class="s1">&#39;precomputed&#39;</span><span class="p">,</span> <span class="s1">&#39;euclidean&#39;</span><span class="p">,</span><span class="s1">&#39;cosine&#39;</span><span class="p">]</span>
 <span class="n">VALID_DIM</span> <span class="o">=</span> <span class="p">[</span><span class="s1">&#39;auto&#39;</span><span class="p">,</span> <span class="s1">&#39;twoNN&#39;</span><span class="p">]</span>
 
-<div class="viewcode-block" id="_PointAdaptive_kNN"><a class="viewcode-back" href="../../code.html#Pipeline.PAk._PointAdaptive_kNN">[docs]</a><span class="k">def</span> <span class="nf">_PointAdaptive_kNN</span><span class="p">(</span><span class="n">distances</span><span class="p">,</span> <span class="n">indices</span><span class="p">,</span> <span class="n">k_max</span><span class="o">=</span><span class="mi">1000</span><span class="p">,</span> <span class="n">D_thr</span><span class="o">=</span><span class="mf">23.92812698</span><span class="p">,</span> <span class="n">dim</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+<div class="viewcode-block" id="_PointAdaptive_kNN"><a class="viewcode-back" href="../../modules.html#Pipeline.PAk._PointAdaptive_kNN">[docs]</a><span class="k">def</span> <span class="nf">_PointAdaptive_kNN</span><span class="p">(</span><span class="n">distances</span><span class="p">,</span> <span class="n">indices</span><span class="p">,</span> <span class="n">k_max</span><span class="o">=</span><span class="mi">1000</span><span class="p">,</span> <span class="n">D_thr</span><span class="o">=</span><span class="mf">23.92812698</span><span class="p">,</span> <span class="n">dim</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
     <span class="sa">r</span><span class="sd">&quot;&quot;&quot;Main function implementing the Pointwise Adaptive k-NN density estimator.</span>
 
 <span class="sd">    Parameters</span>
@@ -107,13 +106,15 @@
 <span class="sd">    </span>
 
 <span class="sd">    &quot;&quot;&quot;</span>
+    <span class="kn">from</span> <span class="nn">Pipeline</span> <span class="kn">import</span> <span class="n">_PAk</span>
+
     <span class="c1"># The adaptive k-Nearest Neighbor density estimator</span>
     <span class="n">k_hat</span><span class="p">,</span> <span class="n">dc</span><span class="p">,</span> <span class="n">densities</span><span class="p">,</span> <span class="n">err_densities</span> <span class="o">=</span> <span class="n">_PAk</span><span class="o">.</span><span class="n">get_densities</span><span class="p">(</span><span class="n">dim</span><span class="p">,</span> <span class="n">distances</span><span class="p">,</span> <span class="n">k_max</span><span class="p">,</span> <span class="n">D_thr</span><span class="p">,</span> <span class="n">indices</span><span class="p">)</span>
 
     <span class="k">return</span> <span class="n">densities</span><span class="p">,</span> <span class="n">err_densities</span><span class="p">,</span> <span class="n">k_hat</span><span class="p">,</span> <span class="n">dc</span></div>
 
 
-<div class="viewcode-block" id="PointAdaptive_kNN"><a class="viewcode-back" href="../../code.html#Pipeline.PAk.PointAdaptive_kNN">[docs]</a><span class="k">class</span> <span class="nc">PointAdaptive_kNN</span><span class="p">(</span><span class="n">BaseEstimator</span><span class="p">,</span> <span class="n">DensityMixin</span><span class="p">):</span>
+<div class="viewcode-block" id="PointAdaptive_kNN"><a class="viewcode-back" href="../../modules.html#Pipeline.PAk.PointAdaptive_kNN">[docs]</a><span class="k">class</span> <span class="nc">PointAdaptive_kNN</span><span class="p">(</span><span class="n">BaseEstimator</span><span class="p">):</span> 
     <span class="sd">&quot;&quot;&quot;Class definition for the Pointwise Adaptive k-NN density estimator.</span>
 
 <span class="sd">    Parameters</span>
@@ -132,7 +133,7 @@
 <span class="sd">        The distance metric to use. </span>
 <span class="sd">        If metric is a string, it must be one of the options allowed by </span>
 <span class="sd">        scipy.spatial.distance.pdist for its metric parameter, or a metric listed in </span>
-<span class="sd">        :obj:`VALID_METRIC = [precomputed, euclidean]`. If metric is ``precomputed``, X is assumed to</span>
+<span class="sd">        :obj:`VALID_METRIC = [precomputed, euclidean,cosine]`. If metric is ``precomputed``, X is assumed to</span>
 <span class="sd">        be a distance matrix. Alternatively, if metric is a callable function, it is </span>
 <span class="sd">        called on each pair of instances (rows) and the resulting value recorded. The </span>
 <span class="sd">        callable should take two arrays from X as input and return a value indicating </span>
@@ -175,6 +176,16 @@
 
 <span class="sd">    Attributes</span>
 <span class="sd">    ----------</span>
+
+<span class="sd">    dim_ : int, </span>
+<span class="sd">        Intrinsic dimensionality of the sample. If ``dim`` is not provided, ``dim_`` is set </span>
+<span class="sd">        to the number of features in the input file.</span>
+
+<span class="sd">    k_max_ : int</span>
+<span class="sd">        The maximum number of nearest-neighbors considered by the procedure that returns the</span>
+<span class="sd">        largest number of neighbors ``k_hat`` for which the condition of constant density</span>
+<span class="sd">        holds, within a given level of confidence. If the number of points in the sample `N` is</span>
+<span class="sd">        less than the default value, k_max_ will be set automatically to the value ``N/2``.</span>
 
 <span class="sd">    distances_ : array [n_samples, k_max+1]</span>
 <span class="sd">        Distances to the k_max neighbors of each points.</span>
@@ -225,7 +236,7 @@
 <span class="sd">    </span>
 <span class="sd">        </span>
 <span class="sd">    &quot;&quot;&quot;</span>
-    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">k_max</span><span class="o">=</span><span class="mi">1000</span><span class="p">,</span> <span class="n">D_thr</span><span class="o">=</span><span class="mf">23.92812698</span><span class="p">,</span> <span class="n">metric</span><span class="o">=</span><span class="s2">&quot;euclidean&quot;</span><span class="p">,</span> <span class="n">dim_algo</span><span class="o">=</span><span class="s2">&quot;auto&quot;</span><span class="p">,</span>
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">k_max</span><span class="o">=</span><span class="mi">1000</span><span class="p">,</span> <span class="n">D_thr</span><span class="o">=</span><span class="mf">23.92812698</span><span class="p">,</span> <span class="n">metric</span><span class="o">=</span><span class="s2">&quot;euclidean&quot;</span><span class="p">,</span> <span class="n">dim_algo</span><span class="o">=</span><span class="s2">&quot;auto&quot;</span><span class="p">,</span>
                        <span class="n">nn_distances</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">nn_indices</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> 
                        <span class="n">blockAn</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">block_ratio</span><span class="o">=</span><span class="mi">20</span><span class="p">,</span> <span class="n">frac</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">dim</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">n_jobs</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">k_max</span> <span class="o">=</span> <span class="n">k_max</span>
@@ -240,7 +251,7 @@
         <span class="bp">self</span><span class="o">.</span><span class="n">dim</span> <span class="o">=</span> <span class="n">dim</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">n_jobs</span> <span class="o">=</span> <span class="n">n_jobs</span>
 
-        <span class="k">if</span> <span class="n">metric</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">VALID_METRIC</span><span class="p">:</span>
+        <span class="k">if</span> <span class="n">metric</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">VALID_METRIC</span> <span class="ow">and</span> <span class="ow">not</span> <span class="n">callable</span><span class="p">(</span><span class="n">metric</span><span class="p">):</span>
             <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;invalid metric: &#39;</span><span class="si">{0}</span><span class="s2">&#39;&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">metric</span><span class="p">))</span>
 
         <span class="k">if</span> <span class="n">dim_algo</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">VALID_DIM</span><span class="p">:</span>
@@ -250,7 +261,7 @@
             <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;frac should be between 0 and 1.&quot;</span><span class="p">)</span>
 
 
-<div class="viewcode-block" id="PointAdaptive_kNN.fit"><a class="viewcode-back" href="../../code.html#Pipeline.PAk.PointAdaptive_kNN.fit">[docs]</a>    <span class="k">def</span> <span class="nf">fit</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">X</span><span class="p">,</span> <span class="n">y</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+<div class="viewcode-block" id="PointAdaptive_kNN.fit"><a class="viewcode-back" href="../../modules.html#Pipeline.PAk.PointAdaptive_kNN.fit">[docs]</a>    <span class="k">def</span> <span class="nf">fit</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">X</span><span class="p">,</span> <span class="n">y</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;Fit the PAk estimator on the data.</span>
 
 <span class="sd">        Parameters</span>
@@ -268,51 +279,54 @@
 <span class="sd">            Returns self.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="c1"># Input validation</span>
-        <span class="n">X</span> <span class="o">=</span> <span class="n">check_array</span><span class="p">(</span><span class="n">X</span><span class="p">,</span> <span class="n">order</span><span class="o">=</span><span class="s1">&#39;C&#39;</span><span class="p">,</span> <span class="n">accept_sparse</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+        <span class="n">X</span> <span class="o">=</span> <span class="n">check_array</span><span class="p">(</span><span class="n">X</span><span class="p">,</span> <span class="n">accept_sparse</span><span class="o">=</span><span class="p">[</span><span class="s1">&#39;csr&#39;</span><span class="p">,</span> <span class="s1">&#39;csc&#39;</span><span class="p">,</span> <span class="s1">&#39;coo&#39;</span><span class="p">],</span>
+                        <span class="n">dtype</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">float64</span><span class="p">,</span> <span class="n">ensure_min_samples</span><span class="o">=</span><span class="mi">2</span><span class="p">)</span>
 
+        <span class="bp">self</span><span class="o">.</span><span class="n">dim_</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">dim</span>
         <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">dim</span><span class="p">:</span>
             <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">dim_algo</span> <span class="o">==</span> <span class="s2">&quot;auto&quot;</span><span class="p">:</span>
-                <span class="bp">self</span><span class="o">.</span><span class="n">dim</span> <span class="o">=</span> <span class="n">X</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">dim_</span> <span class="o">=</span> <span class="n">X</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span>
             <span class="k">elif</span> <span class="bp">self</span><span class="o">.</span><span class="n">dim_algo</span> <span class="o">==</span> <span class="s2">&quot;twoNN&quot;</span><span class="p">:</span>
                 <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">block_ratio</span> <span class="o">&gt;=</span> <span class="n">X</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]:</span>
                     <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;block_ratio is larger than the sample size, the minimum size for block analysis </span><span class="se">\</span>
 <span class="s2">                                would be zero. Please set a lower value.&quot;</span><span class="p">)</span>
-                <span class="bp">self</span><span class="o">.</span><span class="n">dim</span> <span class="o">=</span> <span class="n">twoNearestNeighbors</span><span class="p">(</span><span class="n">blockAn</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">blockAn</span><span class="p">,</span> <span class="n">block_ratio</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">block_ratio</span><span class="p">,</span> 
+                <span class="bp">self</span><span class="o">.</span><span class="n">dim_</span> <span class="o">=</span> <span class="n">twoNearestNeighbors</span><span class="p">(</span><span class="n">blockAn</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">blockAn</span><span class="p">,</span> <span class="n">block_ratio</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">block_ratio</span><span class="p">,</span> <span class="n">metric</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">metric</span><span class="p">,</span>
                                                <span class="n">frac</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">frac</span><span class="p">,</span> <span class="n">n_jobs</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">n_jobs</span><span class="p">)</span><span class="o">.</span><span class="n">fit</span><span class="p">(</span><span class="n">X</span><span class="p">)</span><span class="o">.</span><span class="n">dim_</span>
             <span class="k">else</span><span class="p">:</span>
                 <span class="k">pass</span>
 
+        <span class="bp">self</span><span class="o">.</span><span class="n">k_max_</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">k_max</span>
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">k_max</span> <span class="o">&gt;</span> <span class="n">X</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]:</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">k_max</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">X</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">/</span><span class="mi">2</span><span class="p">)</span>
+            <span class="c1"># the following value is chosen to better address very small data set</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">k_max_</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">X</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">*</span><span class="mf">0.4</span><span class="p">)</span>
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">k_max</span> <span class="o">&lt;</span> <span class="mi">3</span><span class="p">:</span>
             <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;k_max is below 3, the minimum value required for </span><span class="se">\</span>
 <span class="s2">                        statistical significance. Please use a larger datasets.&quot;</span><span class="p">)</span>
 
         <span class="c1"># check if NN matrix is precomputed:</span>
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">nn_distances</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="bp">self</span><span class="o">.</span><span class="n">nn_indices</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
-            <span class="c1"># overwrite the self.k_max</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">k_max</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">nn_distances</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span><span class="o">-</span><span class="mi">1</span>
+            <span class="c1"># overwrite the self.k_max_</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">k_max_</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">nn_distances</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span><span class="o">-</span><span class="mi">1</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">distances_</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">nn_distances</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">indices_</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">nn_indices</span>
         <span class="k">elif</span> <span class="bp">self</span><span class="o">.</span><span class="n">metric</span> <span class="o">==</span> <span class="s2">&quot;precomputed&quot;</span><span class="p">:</span>
-            <span class="n">nbrs</span> <span class="o">=</span> <span class="n">NearestNeighbors</span><span class="p">(</span><span class="n">n_neighbors</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">k_max</span><span class="o">+</span><span class="mi">1</span><span class="p">,</span> <span class="c1"># The point i is counted in its neighborhood </span>
+            <span class="n">nbrs</span> <span class="o">=</span> <span class="n">NearestNeighbors</span><span class="p">(</span><span class="n">n_neighbors</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">k_max_</span><span class="o">+</span><span class="mi">1</span><span class="p">,</span> <span class="c1"># The point i is counted in its neighborhood </span>
                                           <span class="n">algorithm</span><span class="o">=</span><span class="s2">&quot;brute&quot;</span><span class="p">,</span> 
                                         <span class="n">metric</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">metric</span><span class="p">,</span>
                                         <span class="n">n_jobs</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">n_jobs</span><span class="p">)</span><span class="o">.</span><span class="n">fit</span><span class="p">(</span><span class="n">X</span><span class="p">)</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">distances_</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">indices_</span> <span class="o">=</span> <span class="n">nbrs</span><span class="o">.</span><span class="n">kneighbors</span><span class="p">(</span><span class="n">X</span><span class="p">)</span>
         <span class="k">else</span><span class="p">:</span>
-            <span class="n">nbrs</span> <span class="o">=</span> <span class="n">NearestNeighbors</span><span class="p">(</span><span class="n">n_neighbors</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">k_max</span><span class="o">+</span><span class="mi">1</span><span class="p">,</span> <span class="c1"># The point i is counted in its neighborhood </span>
+            <span class="n">nbrs</span> <span class="o">=</span> <span class="n">NearestNeighbors</span><span class="p">(</span><span class="n">n_neighbors</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">k_max_</span><span class="o">+</span><span class="mi">1</span><span class="p">,</span> <span class="c1"># The point i is counted in its neighborhood </span>
                                          <span class="n">algorithm</span><span class="o">=</span><span class="s2">&quot;auto&quot;</span><span class="p">,</span> 
                                         <span class="n">metric</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">metric</span><span class="p">,</span> 
                                         <span class="n">n_jobs</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">n_jobs</span><span class="p">)</span><span class="o">.</span><span class="n">fit</span><span class="p">(</span><span class="n">X</span><span class="p">)</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">distances_</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">indices_</span> <span class="o">=</span> <span class="n">nbrs</span><span class="o">.</span><span class="n">kneighbors</span><span class="p">(</span><span class="n">X</span><span class="p">)</span> 
 
-        
         <span class="bp">self</span><span class="o">.</span><span class="n">densities_</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">err_densities_</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">k_hat_</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">dc_</span> <span class="o">=</span> <span class="n">_PointAdaptive_kNN</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">distances_</span><span class="p">,</span> 
                                                                                  <span class="bp">self</span><span class="o">.</span><span class="n">indices_</span><span class="p">,</span>
-                                                                              <span class="n">k_max</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">k_max</span><span class="p">,</span> 
+                                                                              <span class="n">k_max</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">k_max_</span><span class="p">,</span> 
                                                                               <span class="n">D_thr</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">D_thr</span><span class="p">,</span> 
-                                                                                  <span class="n">dim</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">dim</span><span class="p">)</span>
+                                                                                  <span class="n">dim</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">dim_</span><span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">is_fitted_</span> <span class="o">=</span> <span class="kc">True</span>
 
         <span class="k">return</span> <span class="bp">self</span></div></div>
