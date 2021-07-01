@@ -58,6 +58,7 @@ EXTRAS_REQUIRE = {
         'sphinx_rtd_theme',
         'nbsphinx_link==1.3.0',
         'numpydoc',
+        'sphinx_rtd_theme',
         'matplotlib',
         'scipy',
         'jupyter',
