@@ -18,7 +18,7 @@ except ImportError as e:
     HAVE_CYTHON = False
 
 if not HAVE_CYTHON:
-    warnings.warn('Cython is required in order to build the DPApipeline package')
+    warnings.warn('Cython is required in order to build the DPA package')
     raise ImportError('Cython not found! Please install cython and try again')
 
 
@@ -29,7 +29,7 @@ for root, _, _ in os.walk('src'):
 with open(ver_file) as f:
     exec(f.read())
 
-DISTNAME = 'DPApipeline'
+DISTNAME = 'DPA'
 DESCRIPTION = 'The Density Peak Advanced packages.'
 with codecs.open('README.rst', encoding='utf-8-sig') as f:
     LONG_DESCRIPTION = f.read()
