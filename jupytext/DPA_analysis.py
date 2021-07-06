@@ -6,14 +6,14 @@
 #       extension: .py
 #       format_name: light
 #       format_version: '1.5'
-#       jupytext_version: 1.7.1
+#       jupytext_version: 1.11.3
 #   kernelspec:
 #     display_name: Python 3
 #     language: python
 #     name: python3
 # ---
 
-# # The Density Peak Advanced clustering algorithm
+# # Quickstart with DPA clustering
 #
 # ----------------
 # Load the package:
@@ -32,7 +32,7 @@ import time
 
 # Read input csv file:
 
-data_F1 = pd.read_csv("Pipeline/tests/benchmarks/Fig1.dat", sep=" ", header=None)
+data_F1 = pd.read_csv("src/Pipeline/tests/benchmarks/Fig1.dat", sep=" ", header=None)
 
 # How to run Density Peak Advanced clustering:
 #
@@ -191,6 +191,10 @@ end=time.time()
 print(end-start)
 
 est.topography_
+
+# The topography can be visualized in the form of a dendrogram with the heights of the clusters proportional to the density of the centers.
+
+est.get_histogram()
 
 # Running again with a different Z without the need of recomputing the neighbors-densities
 
