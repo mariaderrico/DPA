@@ -1,0 +1,6 @@
+recursive-include Examples *
+recursive-include DP *
+recursive-include src/Pipeline/tests/benchmarks *
+recursive-include src/Pipeline _DPA.pyx _PAk.pyx
+include DPA_analysis.ipynb
+include DPA_comparison-all.ipynb
