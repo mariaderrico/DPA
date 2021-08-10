@@ -193,7 +193,8 @@ class twoNearestNeighbors(BaseEstimator):
         else:
             # Remove duplicates coordinates
             if len(X)>0:
-                X = np.unique(X, axis=0)
+                _, idx = np.unique(X, axis=0, return_index=True)
+                X = X[np.sort(idx)]
             nbrs = NearestNeighbors(n_neighbors=3, # Only two neighbors used; the point i is counted in its neighborhood
                                          algorithm="auto",
                                         metric=self.metric, 
