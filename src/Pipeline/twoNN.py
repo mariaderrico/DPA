@@ -136,7 +136,7 @@ class twoNearestNeighbors(BaseEstimator):
 
     """
     def __init__(self, metric='euclidean',  blockAn=True, block_ratio=20, frac=1, n_jobs=None, affinity="precomputed"):
-        self.metric = 'euclidean'
+        self.metric = metric
         self.blockAn = blockAn
         self.block_ratio = block_ratio
         self.frac = frac
