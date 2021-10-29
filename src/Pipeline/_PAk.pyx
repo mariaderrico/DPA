@@ -186,7 +186,7 @@ cdef double nrmaxl(double rinit, int kopt,
         ga, gb, Cov2 = get_derivatives(a, b, kopt, vi)
         Covinv2 = get_inverse(Cov2)
         if (abs(a) <= fepsilon or abs(b) <= fepsilon):
-            func = max(gb,ga)
+            func = max(abs(gb),abs(ga))
         else:
             func = max(abs(gb/b),abs(ga/a))
     return b
