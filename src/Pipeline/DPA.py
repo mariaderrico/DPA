@@ -443,7 +443,7 @@ class DensityPeakAdvanced(ClusterMixin, BaseEstimator):
             if x+"_" in self.__dict__:
                 params[x] = self.__dict__[x+"_"]
         return params
-    def get_histogram(self):
+    def get_dendrogram(self):
 # Generation of SL dendrogram
 # Prepare some auxiliary lists
         e1=[]
